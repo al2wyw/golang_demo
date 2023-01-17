@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"unsafe"
 )
 
 type Factory interface {
@@ -135,11 +136,19 @@ func TestReflect(t *testing.T) {
 
 	rv := reflect.ValueOf(factory)
 	prv := reflect.ValueOf(&factory)
+	factory.ProductName = "test"
+
 	factory.Consume()
 	methodCall(rv, "Consume") //method Consume not found
 	methodCall(prv, "Consume")
 
 	reflect.ValueOf(&factory.ProductName).Elem().SetString("test") //field set
+
+	methodCall(prv, "Consume")
+
+	ptr := uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)
+	test := (*string)(unsafe.Pointer(ptr))
+	*test = "test again"
 
 	methodCall(prv, "Consume")
 }
