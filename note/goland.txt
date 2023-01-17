@@ -1,0 +1,133 @@
+不是同类型的变量无法互相赋值，必须先转类型(int64=int不可行)，包括用type声明的同类型也无法互相赋值
+值类型和引用类型:
+数组 [10]int
+切片 []int
+数组是值类型传参是深拷贝，切片是引用类型传址
+对于基本类型,声明即初始化；对于引用类型，声明则初始化为nil
+vname1, vname2, vname3 := v1, v2, v3
+a, b = b, a 交换两变量
+enum的实现方式:
+const (
+    Unknown = 0
+    Female = 1
+    Male = 2
+)
+iota 还有不少奇特用法!!!
+const (
+    a = iota //0
+    b = iota //1
+    c = iota //2
+)
+没有三目运算符
+switch x.(type) {case int: xxx default: xxx}  fallthrough会强制执行后面的 case 语句, 不会判断下一条 case 的表达式结果
+for init; condition; post {}
+for 循环的 range 格式可以对 slice、map、数组、字符串等进行迭代循环: for i,x:= range arrays {}
+如果数组长度不确定，可以使用 ... 代替数组的长度，balance := [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0}
+结构体赋值: variable_name := structure_variable_type {value1, value2...valuen}
+切片赋值(重新切片): s := arr[startIndex:endIndex] 将 arr 中从下标 startIndex 到 endIndex-1 下的元素创建为一个新的切片
+空(nil)切片: 一个切片在未初始化之前默认为 nil，长度为 0，不能通过下标进行数据存取 //参考切片使用大全
+空(nil)集合: 如果不初始化 map，那么就会创建一个 nil map，nil map 不能用来存放键值对
+capital, ok := countryCapitalMap [ "American" ]，ok 用于判断是否存在，delete(countryCapitalMap, "American")删除元素
+类型转换用于将一种数据类型的变量转换为另外一种类型的变量: type_name(expression)
+
+只有同长度、同类型的数组才可视为“同一类型”，譬如[2]int和[3]int则会被视为不同的类型
+只有切片、指针、channel、map、interface及func属于引用类型
+函数不基于结构体而是基于包名调用，方法基于结构体调用(值方法，指针方法) //只能用指针来调用方法吗? 值调用会进行隐式转化成指针调用
+Golang的非侵入式接口不需要通过任何关键字声明类型与接口之间的实现关系，只要一个类型实现了接口的所有方法，那么这个类型就是这个接口的实现类型
+go只能使用接口来承载对应的实现结构体(包括结构体的子类)，结构体的父子类之间无法进行赋值操作!!! 或者使用interface{}类型来承载
+interface{} 空接口是任意类型的接口，所有的类型都是空接口的实现类型
+接口判断: if _, ok := file1.(two.IStream); ok {file1 是否实现了two.IStream接口} file1必须是interface类型
+类型查询: switch v1.(type) {case int: v1的类型是否为int} v1必须是interface类型
+函数接口(接口只能有唯一的函数): 方便直接使用某些接口而不用先定义结构体并实现这个接口，直接定义签名和接口一致的函数，算是一种语法糖
+无论是否出现错误defer代码段都会执行(必须在panic之前调用)，类似于Java中的finally代码块的作用，defer使用一个栈来维护需要执行的代码，所以defer函数所执行的顺序是和defer声明的顺序相反的
+panic的作用是抛出错误，panic和Java中的throw关键字类似，用于抛出错误，阻止程序执行
+recover的作用是捕捉panic抛出的错误并进行处理，需要联合defer来使用，类似于Java中的catch代码块
+CSP（MPG）并发模型: MPG中M指的是内核线程、P指的是上下文环境、G指的是协程，其中M与P一起构成了G可运行的环境，M和P是一一对应关系，通过P来动态地对不同的G做映射和控制
+main函数运行的协程为主协程，其他协程为主协程的守护协程，当主协程死亡其它协程也会死亡, 协程遇到panic导致程序结束时也会死亡
+通道: 读取、写入操作为原子操作，无需担心并发时的数据安全问题，channel内数据的写入对所有协程可见；channel中阻塞的协程是FIFO的；对于为nil的channel的写入和读取都会永久阻塞；默认情况下，通道是不带缓冲区的，发送端发送数据(会阻塞)，同时必须有接收端相应的接收数据；如果通道带缓冲，发送方则会阻塞直到发送的值被拷贝到缓冲区内；如果缓冲区已满，则发送方阻塞；通道被关闭后就不会阻塞
+
+range: 是一个语法糖，会生成 for_temp := s len_temp := len(for_temp) for index_temp := 0; index_temp < len_temp; index_temp++ {}
+
+指针与range: _, u := range userList -> u的地址永远不变!!!
+指针与内存逃逸: 使用指针又能减少内存的占用，但会造成内存逃逸增加GC压力
+
+effective go:
+
+
+新手常犯的50个错误:
+短变量只能在函数内部进行声明； 短变量不能重复声明；短变量在不同的作用范围可以覆盖(shadow declaration)
+nil不能用来给var x进行赋值，无法推断类型；不能直接使用nil的map和slice,但是slice为nil也可以append；string不能使用nil, var x string//x == “”
+range返回的第一个是index/key，第二个是value
+map访问key是否存在, 使用ok方式； map是无序的
+string的值是不可更改的byte slice(可以使用下标进行访问)，需要转换成byte数组进行修改，但是转换会引起额外拷贝!!! len函数只是对底层的byte slice进行count，遇到utf8时需要使用RuneCountInString；可以使用[]rune进行utf8的字符转换；for range是按照rune slice来获取的，如果含有非utf8编码，会返回0xfffd
+log.Panic，log.Fatal 除了记录还能中断程序
+自增和自减必须是后置，并且是单独运算不能参与其他表达式
+按位取反使用的是异或操作符^
+运算符的优先级是不一样的: Precedence大的高优先级
+Precedence    Operator
+    5             *  /  %  <<  >>  &  &^
+    4             +  -  |  ^
+    3             ==  !=  <  <=  >  >=
+    2             &&
+    1             ||
+私有字段无法被 json encode
+主协程是非daemon的，所有的子协程都是daemon，即主协程退出，程序结束
+nil的chan会永久堵塞，可以用在 select 中动态的打开和关闭 case 语句块!!!
+使用defer关闭 HTTP 的响应体，即使没有从中读取信息，重定向时rsp和err同时不为nil!!!
+在 encode/decode JSON 数据时，Go默认会将数值当做 float64 处理: 使用Decoder(复杂); 使用 struct 的tag将你需要的数据映射为数值型
+使用相等运算符 == 来比较结构体变量，前提是两个结构体的成员都是可比较的类型，reflect.DeepEqual用于比较含有不可比较类型成员的结构体
+range 迭代 slice、array、map 时通过更新指针引用来更新对应的数据，一定要是指针!!!
+s := arr[startIndex:endIndex]，s和arr共用底层数据，s的capacity和arr一样!!!
+append：原来slice capacity足够大的情况下，append创建一个新的slice，与旧的slice共享底层，当原来的capacity不够大时才不会共享底层
+完整的 slice 表达式：input[low:high:max]，容量便调整为 max - low，保证len和cap一样
+从一个现有的非 interface 类型创建新类型时，并不会继承原有的方法:
+type myMutex sync.Mutex -> var mtx myMutex -> mtx.Lock() undefined
+type myLocker sync.Locker -> var locker myLocker -> locker.Lock() good
+defer所引用的变量在进行defer声明时就已经赋值好了，而不是在执行时赋值；for循环里面声明defer导致无法回收资源，使用匿名函数替代
+类型判断不要与原来的变量混用, data, ok := data.(int)，在判断失败时data会变成0!!!
+goroutine使用select搭配额外的channel 作为标识来中断(close channel)或者使用带足够缓冲的channel来避免阻塞
+只要值是可寻址的，就可以在值上直接调用指针方法， map的元素是不可寻址的(可以把元素声明成指针元素), slice的元素可寻址
+map元素是 struct类型，则无法直接更新该struct的字段(但可以读此字段): m["x"].name = "Jerry" //error
+var test interface{} -> test == nil
+var data *byte -> var test interface{} = data -> test != nil //必须类型和值都是nil才能对等
+
+go规范:
+error放在返回的参数最后；error进行单独判断处理，不要和其他的变量一起判断处理，也不要使用if else来处理error；
+不要在业务逻辑处理中使用panic；panic 捕获必须在 goroutine 的最顶层即goroutine的入口处
+当存在资源管理时，应紧跟defer函数进行资源的释放
+recover用于捕获异常，必须在defer中使用；不要在for循环里面defer，使用匿名函数包裹住defer，for循环调用匿名函数
+type判断针对不正确的类型将产生panic: 所以使用t, ok := i.(string)避免panic
+
+
+马克:
+不建议map、chan的值使用指针类型:
+map的key, value使用非指针的类型可以减少指针数, 减少了gc扫描时的工作量；
+chan的数据类型为非指针的话, go可以直接通过栈对栈的拷贝进行传递的, 会提高效率, 如果传递的数据很大, 用指针可能会性能更好一些.
+go相似的结构体赋值: 使用反射进行实现的 https://github.com/jinzhu/copier，效率较低
+go的time解析使用格式2006-01-02 15:04:05而不是yyyy-mm-dd这样
+for range + goroutine + 闭包的问题: (主要是"协程"和"闭包+变量"的问题, 协程会延迟引用闭包外的变量)
+	for _, v := range values {
+		go func(u string) {
+        	fmt.Println(u) //不能直接使用v
+    	}(v)
+	}
+	for _, v := range values {
+		v := v //不能直接使用v
+		go func() {
+        	fmt.Println(v)
+    	}()
+	}
+Go中等待所有协程完成，用WaitGroup和Channel:  WaitGroup！Channel是用于多个协程数据同步
+Context使用规范: 不要用来传递函数参数，并且Context作为第一个参数
+go中异步延迟调用: 使用time，不使用sleep
+Go 语言如何继承重写: 结构体父子类无法实现模板方法(方法重写)，但是可以通过传入接口来实现重写 !!!
+别名类型的真实类型: reflect.TypeOf(v1).Kind()
+
+km:
+异常处理规范:
+直观的返回error
+将error保存到对象内部，处理逻辑交给每个方法，本质上仍是顺序执行。标准库的bufio、database/sql包中的Rows等
+github.com/pkg/errors的wrap来封装对应的异常栈，顶层进行error的处理包含unwrap和打印信息
+
+todo：
+MPG原理 runtime调度，context，select原理

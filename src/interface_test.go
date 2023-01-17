@@ -11,6 +11,7 @@ type Duck interface {
 
 type Cat struct{}
 
+// Cat implements Duck
 func (c *Cat) Quack() {
 	fmt.Println("meow")
 }
