@@ -25,16 +25,22 @@ func TestPoniter(t *testing.T) {
 	fmt.Println("test", test)
 
 	arr := []int{1, 2, 3, 4}
-	ptr := unsafe.Pointer(&arr[1])
+	ptr := uintptr(unsafe.Pointer(&arr[1]))
 	qtr := uintptr(unsafe.Pointer(&arr[0])) + unsafe.Sizeof(arr[0])
 	fmt.Println("p q addr value", ptr, qtr)
 
+	barr := []byte{97, 66, 64, 65}
+	fmt.Println(bytesToStr(barr))
 }
 
-//test pointer uintptr
 func Float64bits(f float64) uint64 {
 	fmt.Printf("float64 address %p , %T\n", &f, f)
 	//转化的目标类型（uint64) 的 size 一定不能比原类型 (float64) 还大（二者size都是8个字节）
 	//前后两种类型有等价的 memory layout
 	return *(*uint64)(unsafe.Pointer(&f))
+}
+
+func bytesToStr(arr []byte) string {
+	//避免内存拷贝
+	return *(*string)(unsafe.Pointer(&arr))
 }

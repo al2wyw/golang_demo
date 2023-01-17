@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ type Factory interface {
 	Consume() bool
 }
 
-var _ Factory = (*DrinkFactory)(nil)
+var _ Factory = (*SoftDrinkFactory)(nil)
 
 type CafeFactory struct {
 	ProductName string
@@ -116,4 +117,44 @@ func testInter(inter interface{}) {
 	if _, ok := inter.(Factory); ok {
 		fmt.Println("Factory")
 	}
+}
+
+func TestReflect(t *testing.T) {
+	s := reflect.Int.String()
+	fmt.Println(s) //int
+
+	factory := SoftDrinkFactory{
+		DrinkFactory{"Juice-Product"},
+		"Juice"}
+
+	//需要使用指针来驱动，槽
+	klass := reflect.TypeOf(&factory)
+	fmt.Println(klass.MethodByName("Consume"))
+
+	kind_type_value(factory)
+
+	rv := reflect.ValueOf(factory)
+	prv := reflect.ValueOf(&factory)
+	factory.Consume()
+	methodCall(rv, "Consume") //method Consume not found
+	methodCall(prv, "Consume")
+}
+
+//kind 和 type 自定义类型必然不同 kind 比 type 更抽象
+func kind_type_value(v interface{}) {
+	rv := reflect.ValueOf(v)
+	fmt.Println(rv.Kind(), rv.Type())
+}
+
+func methodCall(rv reflect.Value, method string, in ...reflect.Value) {
+	// 通过方法名称获取 反射的方法对象
+	mv := rv.MethodByName(method)
+	// check mv 是否存在
+	if !mv.IsValid() {
+		fmt.Printf("mv is zero value, method %s not found\n", method)
+		return
+	}
+	// 调用
+	// nil 这里代表参数
+	mv.Call(in)
 }

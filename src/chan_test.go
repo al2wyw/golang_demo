@@ -11,9 +11,31 @@ func TestChan(t *testing.T) {
 	testWaitG()
 	testBufferedChan()
 
-	testPip()
+	//testPip()
 
-	testSelect()
+	//testSelect()
+
+	testMutex()
+}
+
+var comtact_count int64 = 0
+var lock = new(sync.Mutex)
+
+func testMutex() {
+	wg := new(sync.WaitGroup)
+	loop := 100
+	wg.Add(loop)
+
+	for i := 0; i < loop; i++ {
+		go func() {
+			//lock.Lock()
+			defer wg.Done() //; lock.Unlock()
+			comtact_count++
+			fmt.Println("comtact_count", comtact_count) //没有锁顺序错乱但是结果是对的，没有出现互相覆盖， wg有同步能力???
+		}()
+	}
+
+	wg.Wait()
 }
 
 func testPip() {
@@ -29,7 +51,7 @@ func testPip() {
 		}
 	}()
 	close(pip)
-	time.Sleep(60 * time.Second)
+	time.Sleep(10 * time.Second)
 }
 
 func testBufferedChan() {
