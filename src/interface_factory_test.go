@@ -138,6 +138,10 @@ func TestReflect(t *testing.T) {
 	factory.Consume()
 	methodCall(rv, "Consume") //method Consume not found
 	methodCall(prv, "Consume")
+
+	reflect.ValueOf(&factory.ProductName).Elem().SetString("test") //field set
+
+	methodCall(prv, "Consume")
 }
 
 //kind 和 type 自定义类型必然不同 kind 比 type 更抽象
