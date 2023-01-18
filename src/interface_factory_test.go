@@ -133,21 +133,24 @@ func TestReflect(t *testing.T) {
 	fmt.Println(klass.MethodByName("Consume"))
 
 	kind_type_value(factory)
+	DoFiledAndMethod(factory)
 
 	rv := reflect.ValueOf(factory)
 	prv := reflect.ValueOf(&factory)
-	factory.ProductName = "test"
 
 	factory.Consume()
 	methodCall(rv, "Consume") //method Consume not found
 	methodCall(prv, "Consume")
 
-	reflect.ValueOf(&factory.ProductName).Elem().SetString("test") //field set
+	//必须是指针
+	reflect.ValueOf(&(factory.ProductName)).Elem().SetString("test") //field set
 
 	methodCall(prv, "Consume")
 
 	ptr := uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)
-	test := (*string)(unsafe.Pointer(ptr))
+	test := (*string)(unsafe.Pointer(ptr)) //这个回转pinter为什么告警
+	//栈扩容缩容导致ptr的地址值无效 ???
+
 	*test = "test again"
 
 	methodCall(prv, "Consume")
@@ -157,6 +160,32 @@ func TestReflect(t *testing.T) {
 func kind_type_value(v interface{}) {
 	rv := reflect.ValueOf(v)
 	fmt.Println(rv.Kind(), rv.Type())
+}
+
+func DoFiledAndMethod(input interface{}) {
+
+	getType := reflect.TypeOf(input)
+	fmt.Println("get Type is :", getType.Name())
+
+	getValue := reflect.ValueOf(input)
+	fmt.Println("get all Fields is:", getValue)
+
+	// 获取方法字段
+	// 1. 先获取interface的reflect.Type，然后通过NumField进行遍历
+	// 2. 再通过reflect.Type的Field获取其Field
+	// 3. 最后通过Field的Interface()得到对应的value
+	for i := 0; i < getType.NumField(); i++ {
+		field := getType.Field(i)
+		value := getValue.Field(i).Interface()
+		fmt.Printf("%s: %v = %v\n", field.Name, field.Type, value)
+	}
+
+	// 获取方法
+	// 1. 先获取interface的reflect.Type，然后通过.NumMethod进行遍历
+	for i := 0; i < getType.NumMethod(); i++ {
+		m := getType.Method(i)
+		fmt.Printf("%s: %v\n", m.Name, m.Type)
+	}
 }
 
 func methodCall(rv reflect.Value, method string, in ...reflect.Value) {
