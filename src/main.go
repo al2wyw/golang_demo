@@ -3,12 +3,27 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
 
-func main() {
+type ByteSlice []byte
 
+func (p *ByteSlice) Append(data []byte) {
+	slice := *p
+	// Body as above, without the return.
+	*p = slice
+}
+
+func main() {
+	test := make(ByteSlice, 10)
+	test.Append(make([]byte, 10))
+
+	test = append(test, byte(43))
+
+	ret, _ := compute(10, 10, "+")
+	fmt.Println(ret)
 }
 
 type response struct {
@@ -46,6 +61,17 @@ func request(ctx context.Context, url string, ch chan<- response) {
 }
 
 func compute(a, b int, c string) (int, error) {
+
+	var value interface{} = c
+	switch value.(type) {
+	case string:
+		fmt.Println("string type")
+	case int:
+		fmt.Println("int type")
+	default:
+		fmt.Println("error type")
+	}
+
 	switch c {
 	case "+":
 		return a + b, nil

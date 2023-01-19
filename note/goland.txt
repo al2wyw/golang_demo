@@ -80,7 +80,7 @@ range 迭代 slice、array、map 时通过更新指针引用来更新对应的�
 s := arr[startIndex:endIndex]，s和arr共用底层数据，s的capacity和arr一样!!!
 append：原来slice capacity足够大的情况下，append创建一个新的slice，与旧的slice共享底层，当原来的capacity不够大时才不会共享底层
 完整的 slice 表达式：input[low:high:max]，容量便调整为 max - low，保证len和cap一样
-从一个现有的非 interface 类型创建新类型时，并不会继承原有的方法:
+从一个现有的非 interface 类型创建新类型时，并不会继承原有的方法: (sync.Mutex 是 struct)
 type myMutex sync.Mutex -> var mtx myMutex -> mtx.Lock() undefined
 type myLocker sync.Locker -> var locker myLocker -> locker.Lock() good
 defer所引用的变量在进行defer声明时就已经赋值好了，而不是在执行时赋值；for循环里面声明defer导致无法回收资源，使用匿名函数替代

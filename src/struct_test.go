@@ -31,11 +31,26 @@ func testPointer(p student) {
 func TestStruct(t *testing.T) {
 	test2 := 234.34
 	fmt.Println("test2", test2)
+
+	var var1 student
+	var1.Id = "test_id1"
+	var1.Age = 10
+	var1.Name = "Peter"
+	fmt.Println(var1)
+
+	personPtr := new(student)
+	//底层会转换为(*personPtr).Id = "test_id1"
+	personPtr.Id = "test_id1"
+	personPtr.Age = 10
+	personPtr.Name = "Peter"
+	fmt.Println(personPtr)
+
 	person := student{
 		Name: "test",
 		Age:  10,
 		Id:   "test_id1",
 	}
+	person.Id = "test_id2"
 
 	fmt.Println("show name : ", (&person).ShowName())
 	fmt.Println("show name : ", person.ShowName())
