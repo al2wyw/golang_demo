@@ -60,8 +60,8 @@ func testReSlice() {
 	slis2 := make([]int, 3, 5)
 	//slis2[3] = 10 index 错误
 	fmt.Printf("slis2 addr %p\n", slis2)
-	slis2 = append(slis2, 10)
-	fmt.Printf("slis2 addr %p\n", slis2)
+	slis2 = append(slis2, 10)            //enough space
+	fmt.Printf("slis2 addr %p\n", slis2) //the same as above
 	fmt.Println("slis2", slis2)
 
 	path := []byte("AAAA/BBBBBBBBB")

@@ -24,7 +24,7 @@ type DrinkFactory struct {
 
 type SoftDrinkFactory struct {
 	DrinkFactory
-	SoftType string
+	SoftType string `json:"age,omitempty"`
 }
 
 func (d *DrinkFactory) Produce() bool {
@@ -194,6 +194,11 @@ func DoFiledAndMethod(input interface{}) {
 		field := getType.Field(i)
 		value := getValue.Field(i).Interface()
 		fmt.Printf("%s: %v = %v\n", field.Name, field.Type, value)
+
+		tagValue := field.Tag.Get("json")
+		if tagValue == "" {
+			fmt.Printf("can not get tag value \n")
+		}
 	}
 
 	// 获取方法
