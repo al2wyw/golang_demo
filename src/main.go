@@ -32,32 +32,32 @@ type response struct {
 	res []byte
 }
 
-func request(ctx context.Context, url string, ch chan<- response) {
+func request(ctx context.Context, url string, ch chan<- *response) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		ch <- response{url, err, nil}
+		ch <- &response{url, err, nil}
 		return
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		ch <- response{url, err, nil}
+		ch <- &response{url, err, nil}
 		return
 	}
 	defer resp.Body.Close() // always close
 
 	if resp.StatusCode != http.StatusOK {
-		ch <- response{url, errors.New(resp.Status), nil}
+		ch <- &response{url, errors.New(resp.Status), nil}
 		return
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		ch <- response{url, errors.New("read body failed"), nil}
+		ch <- &response{url, errors.New("read body failed"), nil}
 		return
 	}
 
-	ch <- response{url, nil, body}
+	ch <- &response{url, nil, body}
 }
 
 func compute(a, b int, c string) (int, error) {
