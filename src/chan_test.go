@@ -107,7 +107,7 @@ func testSelect() {
 				fmt.Println("read from ch", v)
 			case <-timeout:
 				fmt.Println("read from timeout")
-				//default 一直执行
+				//default 一直执行，导致 CPU 忙转
 				//default:
 				//	fmt.Println("this is default")
 			}

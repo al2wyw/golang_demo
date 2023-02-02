@@ -95,6 +95,7 @@ goroutine使用select搭配额外的channel 作为标识来中断(close channel)
 map元素是 struct类型，则无法直接更新该struct的字段(但可以读此字段): m["x"].name = "Jerry" //error
 var test interface{} -> test == nil
 var data *byte -> var test interface{} = data -> test != nil //必须类型和值都是nil才能对等
+map 并发读写会 panic, 需要加锁或者使用 sync.Map
 
 go规范:
 error放在返回的参数最后；error进行单独判断处理，不要和其他的变量一起判断处理，也不要使用if else来处理error；

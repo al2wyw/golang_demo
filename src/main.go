@@ -66,6 +66,8 @@ func compute(a, b int, c string) (int, error) {
 	switch value.(type) {
 	case string:
 		fmt.Println("string type")
+	case *string:
+		fmt.Println("string ptr type")
 	case int:
 		fmt.Println("int type")
 	default:

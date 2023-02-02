@@ -19,10 +19,6 @@ func TestArray(f *testing.T) {
 		fmt.Println("array elements : ", t)
 	}
 
-	for i := 0; i < 10; i++ {
-		func() { fmt.Println("loop", i) }() // 输出全部为10
-	}
-
 	testReSlice()
 }
 

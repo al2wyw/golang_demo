@@ -11,6 +11,13 @@ import (
 //uintptr 可以被转化为 unsafe.Pointer
 //unsafe.Pointer 可以被转化为 uintptr
 
+type Human struct {
+	i int64
+	j int8
+	k int32
+	n string
+}
+
 func TestPoniter(t *testing.T) {
 
 	i := 10
@@ -31,6 +38,12 @@ func TestPoniter(t *testing.T) {
 
 	barr := []byte{97, 66, 64, 65}
 	fmt.Println(bytesToStr(barr))
+
+	human := Human{
+		9223372036854775807, 34, 34, "test",
+	}
+	//必须考虑内存对齐，Sizeof返回的是多少byte
+	fmt.Println("size of", unsafe.Sizeof(&human), unsafe.Sizeof(human), unsafe.Sizeof(human.i), unsafe.Sizeof(human.j), unsafe.Sizeof(human.k), unsafe.Sizeof(human.n))
 }
 
 func Float64bits(f float64) uint64 {

@@ -86,4 +86,13 @@ func TestStruct(t *testing.T) {
 
 	b.Pages()  // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组元素，可寻址的结构体字段 ，切片 ，指针引用等，(Book{}).Pages() 会报错，字面量不可寻址
 	b1.Pages() // Pages
+	//Book{}.Pages()
+
+	fmt.Println("book slice test start")
+	books := make([]Book, 3)
+	books[0].Pages()
+
+	bookDict := make(map[string]Book)
+	bookDict["k1"] = Book{}
+	//bookDict["k1"].Pages()
 }

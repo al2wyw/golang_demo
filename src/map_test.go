@@ -45,6 +45,10 @@ func TestMap(t *testing.T) {
 		}
 	}
 
+	if target, exist := dict3["test"]; exist {
+		fmt.Println("target ", target)
+	}
+
 	fmt.Println("show dict3 name : ", dict3["test"])
 
 	dict4 := make(map[Person]string)
