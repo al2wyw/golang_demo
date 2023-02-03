@@ -60,6 +60,10 @@ func testReSlice() {
 	fmt.Printf("slis2 addr %p\n", slis2) //the same as above
 	fmt.Println("slis2", slis2)
 
+	var slis3 []int
+	// slis3[0] = 10 //nil slice 不可以直接通过下标访问
+	slis3 = append(slis3, 1) //nil slice 可以直接append
+
 	path := []byte("AAAA/BBBBBBBBB")
 	sepIndex := bytes.IndexByte(path, '/') // 4
 	println(sepIndex)

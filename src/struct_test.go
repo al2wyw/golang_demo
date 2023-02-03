@@ -28,6 +28,10 @@ func testPointer(p student) {
 	fmt.Println(p)
 }
 
+//（1）如果方法需要修改receiver，那么必须使用指针方法；
+//（2）如果receiver是一个很大的结构体，考虑到效率，应该使用指针方法；
+//（3）一致性。如果一些方法必须是指针receiver，那么其它方法也应该使用指针receiver；
+//（4）对于一些基本类型、切片、或者小的结构体，使用value receiver效率会更高一些。
 type Book struct{}
 
 //值方法，Book为 receiver type

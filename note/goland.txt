@@ -23,6 +23,7 @@ const (
 )
 没有三目运算符
 switch x.(type) {case int: xxx default: xxx}  fallthrough会强制执行后面的 case 语句, 不会判断下一条 case 的表达式结果
+case 后面不需要带 break，程序匹配到一个 case 后就会执行对应的代码块，然后退出 switch,如果一个都匹配不到，则执行 default
 for init; condition; post {}
 for 循环的 range 格式可以对 slice、map、数组、字符串等进行迭代循环: for i,x:= range arrays {}
 如果数组长度不确定，可以使用 ... 代替数组的长度，balance := [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0}
