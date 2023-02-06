@@ -9,7 +9,7 @@ import (
 func TestChan(t *testing.T) {
 	testBufferedChan()
 
-	//testPip()
+	testPip()
 
 	testSelect()
 }
@@ -22,12 +22,12 @@ func testPip() {
 		count := 10
 		for i := 0; i < count; i++ {
 			val, ok := <-pip
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			fmt.Println("wake up start to work", val, ok)
 		}
 	}()
 	close(pip)
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 }
 
 func testBufferedChan() {

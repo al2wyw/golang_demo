@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"testing"
+	"time"
 )
 
 type student struct {
@@ -42,6 +43,36 @@ func (b Book) SetPages() {
 //指针方法，*Book为 receiver type
 func (b *Book) Pages() {
 	fmt.Println("Pages")
+}
+
+//多重继承
+type Car struct {
+	Name string
+	Age  int
+}
+
+func (c *Car) Set(age int) {
+	fmt.Println("car set called")
+	c.Age = age
+}
+
+type Car2 struct {
+	Name string
+}
+
+//Go有匿名字段特性
+type Train struct {
+	Car
+	Car2
+	createTime time.Time
+	//count int   正常写法，Go的特性可以写成
+	int
+}
+
+//给Train加方法，t指定接受变量的名字，变量可以叫this，t，p
+func (t *Train) Set(age int) {
+	fmt.Println("train set called")
+	t.int = age
 }
 
 func TestStruct(t *testing.T) {
@@ -99,4 +130,11 @@ func TestStruct(t *testing.T) {
 	bookDict := make(map[string]Book)
 	bookDict["k1"] = Book{}
 	//bookDict["k1"].Pages()
+
+	var train Train
+	train.int = 10 //这里用的匿名字段写法，给Age赋值
+	train.Set(1000)
+	train.Car.Set(1)
+	train.Car.Name = "test" //这里Name必须得指定结构体
+	fmt.Println(train)
 }

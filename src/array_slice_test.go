@@ -8,6 +8,10 @@ import (
 )
 
 func TestArray(f *testing.T) {
+
+	balance := [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0} //balance是数组
+	fmt.Println("balance", balance)
+
 	array := []int{1, 2, 3, 4}
 	test1 := array[0]
 	testPtr(&array[0])

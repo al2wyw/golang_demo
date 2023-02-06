@@ -87,6 +87,7 @@ func TestFactory(tt *testing.T) {
 	doProduce(factory)
 	doConsume(factory)
 
+	testFactory(factory)
 	var inter interface{} = *factory
 	var interPtr interface{} = factory
 	testInterPointer(interPtr)
@@ -110,6 +111,18 @@ func TestFactory(tt *testing.T) {
 	duck.Quack()
 
 	fmt.Printf("duck type %T", duck)
+}
+
+func testFactory(inter Factory) {
+	if _, ok := inter.(*SoftDrinkFactory); ok {
+		fmt.Println("*SoftDrinkFactory")
+	}
+	if _, ok := inter.(*DrinkFactory); ok {
+		fmt.Println("*DrinkFactory")
+	}
+	if _, ok := inter.(Factory); ok {
+		fmt.Println("Factory")
+	}
 }
 
 func testInterPointer(inter interface{}) {
