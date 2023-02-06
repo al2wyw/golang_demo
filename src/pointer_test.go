@@ -37,7 +37,8 @@ func TestPoniter(t *testing.T) {
 	fmt.Println("p q addr value", ptr, qtr)
 
 	barr := []byte{97, 66, 64, 65}
-	fmt.Println(bytesToStr(barr))
+	str := BytesToStr(barr)
+	fmt.Println(str)
 
 	human := Human{
 		9223372036854775807, 34, 34, "test",
@@ -53,7 +54,7 @@ func Float64bits(f float64) uint64 {
 	return *(*uint64)(unsafe.Pointer(&f))
 }
 
-func bytesToStr(arr []byte) string {
+func BytesToStr(arr []byte) string {
 	//避免内存拷贝
 	return *(*string)(unsafe.Pointer(&arr))
 }

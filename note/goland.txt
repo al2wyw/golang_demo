@@ -103,7 +103,7 @@ error放在返回的参数最后；error进行单独判断处理，不要和其�
 不要在业务逻辑处理中使用panic；panic 捕获必须在 goroutine 的最顶层即goroutine的入口处
 当存在资源管理时，应紧跟defer函数进行资源的释放
 recover用于捕获异常，必须在defer中使用；不要在for循环里面defer，使用匿名函数包裹住defer，for循环调用匿名函数
-type判断针对不正确的类型将产生panic: 所以使用t, ok := i.(string)避免panic
+type判断针对不正确的类型将产生panic: t := i.(string); 所以使用t, _ := i.(string)避免panic
 
 
 马克:

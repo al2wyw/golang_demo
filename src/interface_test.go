@@ -43,6 +43,12 @@ func (d *DrinkFactory) Show() bool {
 	return true
 }
 
+// Method reflect method test
+func (d SoftDrinkFactory) Method() bool {
+	fmt.Printf("SoftDrinkFactory方法调用%s成功\n", d.ProductName)
+	return true
+}
+
 func (d *SoftDrinkFactory) Show() bool {
 	fmt.Printf("SoftDrinkFactory show%s成功\n", d.ProductName)
 	return true
@@ -157,9 +163,27 @@ func TestReflect(t *testing.T) {
 		DrinkFactory{"Juice-Product"},
 		"Juice"}
 
-	//需要使用指针来驱动，槽
+	//指针类型可以获取到指针方法和值方法，不可以获取到字段；struct类型可以获取到值方法和字段
+	class := reflect.TypeOf(factory)
+	fmt.Println(class.FieldByName("SoftType"))
+	fmt.Println(class.MethodByName("Method"))
+	fmt.Println(class.MethodByName("Consume"))
+
+	for i := 0; i < class.NumMethod(); i++ {
+		m := class.Method(i)
+		fmt.Printf("%s: %v\n", m.Name, m.Type)
+	}
+
+	//需要使用指针来驱动，因为Consume是指针方法
 	klass := reflect.TypeOf(&factory)
+	//fmt.Println(klass.FieldByName("SoftType")) //panic
+	fmt.Println(klass.MethodByName("Method"))
 	fmt.Println(klass.MethodByName("Consume"))
+
+	for i := 0; i < klass.NumMethod(); i++ {
+		m := klass.Method(i)
+		fmt.Printf("%s: %v\n", m.Name, m.Type)
+	}
 
 	kind_type_value(factory)
 	DoFiledAndMethod(factory)
@@ -168,7 +192,9 @@ func TestReflect(t *testing.T) {
 	prv := reflect.ValueOf(&factory)
 
 	factory.Consume()
+	methodCall(rv, "Method")
 	methodCall(rv, "Consume") //method Consume not found
+	methodCall(prv, "Method") //这个怎么会调的到???
 	methodCall(prv, "Consume")
 
 	//必须是指针
@@ -177,7 +203,7 @@ func TestReflect(t *testing.T) {
 	methodCall(prv, "Consume")
 
 	ptr := uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)
-	test := (*string)(unsafe.Pointer(ptr)) //这个回转pinter为什么告警
+	test := (*string)(unsafe.Pointer(ptr)) //这个回转pinter为什么告警，但是这样就不会告警: test := (*string)(unsafe.Pointer(uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)))
 	//栈扩容缩容导致ptr的地址值无效 ???
 
 	*test = "test again"

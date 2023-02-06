@@ -7,6 +7,7 @@ import (
 
 func TestDefer(t *testing.T) {
 	testDefer()
+	fmt.Println("defer return", testDeferV2())
 
 	testTypeAssert(1)
 	testTypeAssert("test")
@@ -14,10 +15,19 @@ func TestDefer(t *testing.T) {
 
 func testDefer() {
 	var i = 1
-	//预先设置好引用的变量
-	defer fmt.Println("result: ", func() int { return i * 2 }()) //2
+
+	defer fmt.Println("result: ", func() int { fmt.Println("call: ", i); return i * 2 }()) //2
 	i++
 	fmt.Println("main result: ", i) //2
+}
+
+func testDeferV2() int {
+	var i = 1
+
+	defer func() int { i *= 2; fmt.Println("result: ", i); return i }() //2
+	i++
+	fmt.Println("main result: ", i) //2
+	return i
 }
 
 func testTypeAssert(object interface{}) {
