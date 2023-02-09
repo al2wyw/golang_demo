@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"unsafe"
 )
@@ -18,7 +19,7 @@ type Human struct {
 	n string
 }
 
-func TestPoniter(t *testing.T) {
+func TestPointer(t *testing.T) {
 
 	i := 10
 	p := &i
@@ -34,7 +35,7 @@ func TestPoniter(t *testing.T) {
 	arr := []int{1, 2, 3, 4}
 	ptr := uintptr(unsafe.Pointer(&arr[1]))
 	qtr := uintptr(unsafe.Pointer(&arr[0])) + unsafe.Sizeof(arr[0])
-	fmt.Println("p q addr value", ptr, qtr)
+	fmt.Println("p q addr value", ptr, strconv.FormatInt(int64(ptr), 16), qtr, strconv.FormatInt(int64(qtr), 16))
 
 	barr := []byte{97, 66, 64, 65}
 	str := BytesToStr(barr)
@@ -45,6 +46,14 @@ func TestPoniter(t *testing.T) {
 	}
 	//必须考虑内存对齐，Sizeof返回的是多少byte
 	fmt.Println("size of", unsafe.Sizeof(&human), unsafe.Sizeof(human), unsafe.Sizeof(human.i), unsafe.Sizeof(human.j), unsafe.Sizeof(human.k), unsafe.Sizeof(human.n))
+
+	//只有*AnyType的变量才能转为unsafe.Pointer，即使是引用类型的变量也不能直接转为unsafe.Pointer
+	slice := []int{1, 2, 3}
+	//_ = unsafe.Pointer(slice)
+	fmt.Printf("addrs %p, %p, %p \n", slice, &slice, unsafe.Pointer(&slice))
+
+	var interf interface{} = &i
+	fmt.Printf("addrs %p, %p, %p, %p \n", &i, interf, &interf, unsafe.Pointer(&interf))
 }
 
 func Float64bits(f float64) uint64 {

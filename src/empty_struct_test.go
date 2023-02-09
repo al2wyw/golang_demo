@@ -21,6 +21,6 @@ func TestEmpty(t *testing.T) {
 	fmt.Println(unsafe.Sizeof(u))
 
 	var e = Empty{}
-	fmt.Printf("empty address %p\n", &e)
-	fmt.Printf("empty address %p\n", &struct{}{})
+	fmt.Printf("EmptyInt address %p\n", &e)
+	fmt.Printf("EmptyInt address %p\n", &struct{}{})
 }

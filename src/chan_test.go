@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -10,8 +11,24 @@ func TestChan(t *testing.T) {
 	testBufferedChan()
 
 	testPip()
+}
 
-	testSelect()
+func TestContext(t *testing.T) {
+	cxt, cancel := context.WithTimeout(context.Background(), 3*time.Second) //WithDeadline用法一致，只是第二个参数变成了固定时间点
+	defer cancel()
+	//调用cancel或者WithTimeout的duration到了，Done()都会返回chan
+
+	go func() {
+		select {
+		case <-cxt.Done():
+			fmt.Println("testContext cxt is canceled", cxt.Err())
+		case <-time.After(2 * time.Second):
+			fmt.Println("testContext time out")
+		}
+	}()
+
+	time.Sleep(4 * time.Second)
+	fmt.Println("testContext main cancel")
 }
 
 func testPip() {
@@ -53,7 +70,7 @@ func testBufferedChan() {
 	time.Sleep(100 * time.Millisecond)
 }
 
-func testSelect() {
+func TestSelect(t *testing.T) {
 	ch := make(chan int)
 	timeout := make(chan bool)
 	go func() {

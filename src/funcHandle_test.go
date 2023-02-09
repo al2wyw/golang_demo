@@ -2,20 +2,25 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
-type empty int
+type EmptyInt int
 
-func (em *empty) doNothing(v interface{}) {
+func (em *EmptyInt) DoNothing(v interface{}) {
 	if v == nil {
 		return
 	}
 	*em += 1
-	fmt.Printf("doNothing %p  %d 成功\n", &v, *em)
+	fmt.Printf("DoNothing %p  %d 成功\n", &v, *em)
 }
 
-func doNothing(v interface{}) {
+func (em EmptyInt) ShowMySelf(v interface{}) {
+	fmt.Printf("show %d 成功\n", em)
+}
+
+func DoNothing(v interface{}) {
 	if v == nil {
 		return
 	}
@@ -24,10 +29,10 @@ func doNothing(v interface{}) {
 
 /////////////接口型函数的demo////////////
 type Func interface {
-	doFun(v interface{})
+	DoFun(v interface{})
 }
 
-func testFuncDriver(fun Func) {
+func FuncDriver(fun Func) {
 	fmt.Println("func interface method called", fun)
 }
 
@@ -36,28 +41,35 @@ func testFuncDriver(fun Func) {
 //在其他语言里面，有些函数可以直接作为参数传递，有些是以函数指针进行传递，但是都没有办法像go这样可以给函数类型“增加”新方法
 type FuncHandle func(interface{})
 
-func (fun FuncHandle) doFun(v interface{}) {
+func (fun FuncHandle) DoFun(v interface{}) {
 	fun(v)
 }
 
 func FuncCaller(v interface{}, fun func(interface{})) {
 	h := FuncHandle(fun) //类型装换
-	h.doFun(v)
-	testFuncDriver(h)
+	h.DoFun(v)
+	FuncDriver(h)
 }
 
 /////////////接口型函数的demo////////////
 
 func TestFunCaller(t *testing.T) {
-	var em empty = 1
+	var em EmptyInt = 1
 	var val int = 1
 	em++
 
-	em.doNothing(val)
-	FuncCaller(val, em.doNothing)
-	var emn empty = 10
-	FuncCaller(val, emn.doNothing)
+	em.DoNothing(val)
+	FuncCaller(val, em.DoNothing)
+	var emn EmptyInt = 10
+	FuncCaller(val, emn.DoNothing)
 	//fmt.Println(em == val) //em 的值是int，但是类型不是int
 
-	FuncCaller(val, doNothing)
+	FuncCaller(val, DoNothing)
+
+	klass := reflect.TypeOf(&em)
+	for i := 0; i < klass.NumMethod(); i++ {
+		m := klass.Method(i)
+		fmt.Printf("%s: %v\n", m.Name, m.Type)
+	}
+
 }

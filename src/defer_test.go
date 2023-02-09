@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestDefer(t *testing.T) {
@@ -11,6 +14,35 @@ func TestDefer(t *testing.T) {
 
 	testTypeAssert(1)
 	testTypeAssert("test")
+
+	testRoutineDefer()
+}
+
+func testRoutineDefer() {
+	var deferCount = 0
+	wg := new(sync.WaitGroup)
+	max := 10
+	wg.Add(max)
+	for loop := 0; loop < max; loop++ {
+		go func(i int) {
+			defer func() {
+				wg.Done()
+				if err := recover(); err != nil {
+					fmt.Printf("panic error %+v\n%s", err, debug.Stack())
+				}
+			}()
+			for {
+				time.Sleep(100 * time.Millisecond)
+				fmt.Println("wake up to work", i)
+				deferCount++
+				if deferCount%10 == 0 {
+					panic(fmt.Errorf("this is 10, %d", i)) //如果没有recover，一旦panic整个程序都结束，recover只是防止整个程序结束
+				}
+			}
+		}(loop)
+	}
+
+	wg.Wait()
 }
 
 func testDefer() {

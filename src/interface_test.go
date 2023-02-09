@@ -162,8 +162,9 @@ func TestReflect(t *testing.T) {
 	factory := SoftDrinkFactory{
 		DrinkFactory{"Juice-Product"},
 		"Juice"}
+	fmt.Printf("factory addr %p\n", &factory)
 
-	//指针类型可以获取到指针方法和值方法，不可以获取到字段；struct类型可以获取到值方法和字段
+	//指针类型可以获取到指针方法和值方法，不可以获取到字段；值类型可以获取到值方法和字段
 	class := reflect.TypeOf(factory)
 	fmt.Println(class.FieldByName("SoftType"))
 	fmt.Println(class.MethodByName("Method"))
@@ -197,7 +198,7 @@ func TestReflect(t *testing.T) {
 	methodCall(prv, "Method") //这个怎么会调的到???
 	methodCall(prv, "Consume")
 
-	//必须是指针
+	//必须是指针，才是addressable的
 	reflect.ValueOf(&(factory.ProductName)).Elem().SetString("test") //field set
 
 	methodCall(prv, "Consume")
@@ -209,6 +210,17 @@ func TestReflect(t *testing.T) {
 	*test = "test again"
 
 	methodCall(prv, "Consume")
+}
+
+func TestInterface(t *testing.T) {
+	var softFactory = SoftDrinkFactory{
+		DrinkFactory{"Juice-Product"},
+		"Juice"}
+	var factory Factory = &softFactory
+
+	fmt.Printf("addr %p, %p, %p \n", factory, &factory, unsafe.Pointer(&factory))
+	fmt.Println(reflect.TypeOf(softFactory))
+	fmt.Println(reflect.TypeOf(factory))
 }
 
 //kind 和 type 自定义类型必然不同 kind 比 type 更抽象

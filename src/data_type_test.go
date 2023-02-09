@@ -27,4 +27,6 @@ func TestDataType(t *testing.T) {
 
 	var test interface{} = nil
 	fmt.Println(test, test == nil) // <nil> true
+
+	fmt.Printf("%p\n", in) // 0x0
 }

@@ -56,16 +56,24 @@ func (c *Car) Set(age int) {
 	c.Age = age
 }
 
+func (c *Car) Show() {
+	fmt.Println("car is shown", c)
+}
+
 type Car2 struct {
 	Name string
 }
 
+func (c *Car2) Action() {
+	fmt.Println("car is action", c.Name)
+}
+
 //Go有匿名字段特性
 type Train struct {
-	Car
-	Car2
+	Car //强依赖Car struct类型，如果只是依赖Show()和Set(age int)两个方法，可以改为interface 参考Vehicle
+	*Car2
 	createTime time.Time
-	//count int   正常写法，Go的特性可以写成
+	//age int   正常写法，Go的特性可以写成
 	int
 }
 
@@ -73,6 +81,38 @@ type Train struct {
 func (t *Train) Set(age int) {
 	fmt.Println("train set called")
 	t.int = age
+}
+
+//如果接口不想被外部包实现，可以增加一个私有方法，但是可以用匿名嵌套的方式破解
+type Vehicle interface {
+	Engine()
+	//private()
+}
+
+type EngineImpl struct {
+	Name string
+}
+
+//Vehicle如果有两个方法，EngineImpl只实现一个方法的话不能算实现了接口，必须两个方法都实现
+func (c *EngineImpl) Engine() {
+	fmt.Println(c.Name, " has engine")
+}
+
+type DefaultEngine struct {
+	Name string
+}
+
+func (c DefaultEngine) Engine() {
+	fmt.Println(c.Name, " has default engine")
+}
+
+type Bus struct {
+	Vehicle
+	Pay float32
+}
+
+func (c *Bus) Aboard() {
+	fmt.Println("welcome aboard")
 }
 
 func TestStruct(t *testing.T) {
@@ -107,20 +147,22 @@ func TestStruct(t *testing.T) {
 	testPointer(person)
 
 	fmt.Println(person)
+}
 
+func TestMethodCall(t *testing.T) {
 	//
 	var bb Book
 	Book.SetPages(bb)  // 显式调用
 	(*Book).Pages(&bb) // 显式调用
 
 	b := Book{}
-	b1 := &b
+	bptr := &b
 
-	b.SetPages()  // SetPages
-	b1.SetPages() // SetPages golang会将其解释为*b1.SetPages()
+	b.SetPages()    // SetPages
+	bptr.SetPages() // SetPages golang会将其解释为*bptr.SetPages()
 
-	b.Pages()  // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组元素，可寻址的结构体字段 ，切片 ，指针引用等，(Book{}).Pages() 会报错，字面量不可寻址
-	b1.Pages() // Pages
+	b.Pages()    // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组元素，可寻址的结构体字段 ，切片 ，指针引用等，(Book{}).Pages() 会报错，字面量不可寻址
+	bptr.Pages() // Pages
 	//Book{}.Pages()
 
 	fmt.Println("book slice test start")
@@ -130,11 +172,45 @@ func TestStruct(t *testing.T) {
 	bookDict := make(map[string]Book)
 	bookDict["k1"] = Book{}
 	//bookDict["k1"].Pages()
+}
 
+func TestDerived(t *testing.T) {
 	var train Train
-	train.int = 10 //这里用的匿名字段写法，给Age赋值
+	train.int = 10 //这里用的匿名字段写法
 	train.Set(1000)
+
+	train.Car2 = new(Car2) //一定要先初始化，因为是指针
+	train.Car2.Name = "test for car2"
+	train.Action()
+
 	train.Car.Set(1)
 	train.Car.Name = "test" //这里Name必须得指定结构体
+
+	train.Show()
+
 	fmt.Println(train)
+
+	var engine = &EngineImpl{"normal engine"}
+	var bus = Bus{engine, 323.22}
+
+	bus.Engine()
+	//bus.Vehicle = EngineImpl{"test engine"} //不行
+	bus.Vehicle = &DefaultEngine{"engine"}
+	bus.Engine()
+	bus.Vehicle = DefaultEngine{"special engine"}
+	bus.Engine()
+	bus.Aboard()
 }
+
+/*
+var veh Vehicle = Engine{}: 调用方是值
+var veh Vehicle = &Engine{}: 调用方是指针
+调用方	接收方	能否编译
+值		值		true
+值		指针		false
+指针		值		true
+指针		指针		true
+指针		指针和值	true
+值		指针和值	false
+调用方是值时，只要接收方有指针方法那不允许编译，赋值语句报错
+*/
