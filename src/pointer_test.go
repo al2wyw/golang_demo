@@ -32,6 +32,17 @@ func TestPointer(t *testing.T) {
 	test := Float64bits(125.34)
 	fmt.Println("test", test)
 
+	//小 转 大 出现异常
+	var small int8 = 34
+	var large = *(*int32)(unsafe.Pointer(&small))
+	fmt.Println("my large value", large)
+
+	var big uint16 = 773 //
+	var little = *(*uint8)(unsafe.Pointer(&big))
+	fmt.Println("my big value", big>>8, big&0xf)
+	fmt.Println("my little value", little)                                                       //5
+	fmt.Println("my little value", *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&big)) + 1))) //3
+
 	arr := []int{1, 2, 3, 4}
 	ptr := uintptr(unsafe.Pointer(&arr[1]))
 	qtr := uintptr(unsafe.Pointer(&arr[0])) + unsafe.Sizeof(arr[0])

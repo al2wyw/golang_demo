@@ -34,7 +34,9 @@ func TestContext(t *testing.T) {
 func testPip() {
 	pip := make(chan int, 100)
 	pip <- 100
-
+	pip <- 120
+	pip <- 130
+	close(pip)
 	go func() {
 		count := 10
 		for i := 0; i < count; i++ {
@@ -43,7 +45,7 @@ func testPip() {
 			fmt.Println("wake up start to work", val, ok)
 		}
 	}()
-	close(pip)
+
 	time.Sleep(1 * time.Second)
 }
 

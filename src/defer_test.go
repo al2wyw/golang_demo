@@ -28,14 +28,16 @@ func TestDeferExit(t *testing.T) {
 	sign := make(chan os.Signal)
 	signal.Notify(sign, syscall.SIGTERM) //如果没有signal， kill会让程序直接退出，defer不会运行
 
+	timer := time.NewTimer(3 * time.Second)
 	for {
 		select {
 		case s := <-sign:
 			fmt.Println("signal", s)
 			return
-		case <-time.After(3 * time.Second):
+		case <-timer.C:
 			fmt.Println("alive")
 		}
+		timer.Reset(3 * time.Second)
 	}
 
 }
