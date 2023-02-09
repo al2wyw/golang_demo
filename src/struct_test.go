@@ -152,8 +152,11 @@ func TestStruct(t *testing.T) {
 func TestMethodCall(t *testing.T) {
 	//
 	var bb Book
-	Book.SetPages(bb)  // 显式调用
-	(*Book).Pages(&bb) // 显式调用
+	// 显式调用:
+	Book.SetPages(bb)
+	//Book.Pages(bb) //invalid method expression Book.Pages (needs pointer receiver: (*Book).Pages)
+	(*Book).SetPages(&bb) //go会自动生成指针方法
+	(*Book).Pages(&bb)
 
 	b := Book{}
 	bptr := &b

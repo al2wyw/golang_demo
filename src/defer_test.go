@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -14,11 +17,30 @@ func TestDefer(t *testing.T) {
 
 	testTypeAssert(1)
 	testTypeAssert("test")
-
-	testRoutineDefer()
 }
 
-func testRoutineDefer() {
+//TestDeferExit 优雅退出
+func TestDeferExit(t *testing.T) {
+	defer func() {
+		fmt.Println("exit")
+	}()
+
+	sign := make(chan os.Signal)
+	signal.Notify(sign, syscall.SIGTERM) //如果没有signal， kill会让程序直接退出，defer不会运行
+
+	for {
+		select {
+		case s := <-sign:
+			fmt.Println("signal", s)
+			return
+		case <-time.After(3 * time.Second):
+			fmt.Println("alive")
+		}
+	}
+
+}
+
+func TestRoutineDefer(t *testing.T) {
 	var deferCount = 0
 	wg := new(sync.WaitGroup)
 	max := 10
@@ -27,6 +49,7 @@ func testRoutineDefer() {
 		go func(i int) {
 			defer func() {
 				wg.Done()
+				fmt.Printf("defer is called\n")
 				if err := recover(); err != nil {
 					fmt.Printf("panic error %+v\n%s", err, debug.Stack())
 				}
