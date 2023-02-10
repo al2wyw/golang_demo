@@ -2,6 +2,7 @@ package sync_tests
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -9,6 +10,8 @@ import (
 
 func TestWait(t *testing.T) {
 	testWaitG()
+
+	testMutex()
 }
 
 func testWaitG() {
@@ -26,7 +29,7 @@ func testWaitG() {
 	}()
 
 	ch <- "cmd.1"
-	ch <- "cmd.2" // 不会被接收处理
+	ch <- "cmd.2"
 	close(ch)
 	wg.Wait()
 }
@@ -39,6 +42,7 @@ func testMutex() {
 	loop := 100
 	wg.Add(loop)
 
+	fmt.Println(runtime.GOMAXPROCS(0), runtime.NumCPU())
 	for i := 0; i < loop; i++ {
 		go func() {
 			//lock.Lock()

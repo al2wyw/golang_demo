@@ -19,6 +19,19 @@ type Human struct {
 	n string
 }
 
+type MyStr struct {
+	Data *int
+	Len  int
+}
+
+func (str MyStr) toStr() string {
+	var builder = make([]byte, str.Len, str.Len)
+	for i := 0; i < str.Len; i++ {
+		builder[i] = *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(str.Data)) + uintptr(i)))
+	}
+	return string(builder)
+}
+
 func TestPointer(t *testing.T) {
 
 	i := 10
@@ -28,29 +41,6 @@ func TestPointer(t *testing.T) {
 	*fp = *fp * 10
 	fmt.Println("float32 addr value", fp, *fp)
 	fmt.Println("int addr value", &i, i)
-
-	test := Float64bits(125.34)
-	fmt.Println("test", test)
-
-	//小 转 大 出现异常
-	var small int8 = 34
-	var large = *(*int32)(unsafe.Pointer(&small))
-	fmt.Println("my large value", large)
-
-	var big uint16 = 773 //
-	var little = *(*uint8)(unsafe.Pointer(&big))
-	fmt.Println("my big value", big>>8, big&0xf)
-	fmt.Println("my little value", little)                                                       //5
-	fmt.Println("my little value", *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&big)) + 1))) //3
-
-	arr := []int{1, 2, 3, 4}
-	ptr := uintptr(unsafe.Pointer(&arr[1]))
-	qtr := uintptr(unsafe.Pointer(&arr[0])) + unsafe.Sizeof(arr[0])
-	fmt.Println("p q addr value", ptr, strconv.FormatInt(int64(ptr), 16), qtr, strconv.FormatInt(int64(qtr), 16))
-
-	barr := []byte{97, 66, 64, 65}
-	str := BytesToStr(barr)
-	fmt.Println(str)
 
 	human := Human{
 		9223372036854775807, 34, 34, "test",
@@ -65,6 +55,38 @@ func TestPointer(t *testing.T) {
 
 	var interf interface{} = &i
 	fmt.Printf("addrs %p, %p, %p, %p \n", &i, interf, &interf, unsafe.Pointer(&interf))
+}
+
+func TestAddressTransfer(t *testing.T) {
+	test := Float64bits(125.34)
+	fmt.Println("test", test)
+
+	//小 转 大 出现异常
+	var small int8 = 34
+	var large = *(*int32)(unsafe.Pointer(&small))
+	fmt.Println("my large value", large)
+
+	var big uint16 = 773 //
+	var little = *(*uint8)(unsafe.Pointer(&big))
+	//x86架构是little endian(low-byte first, LE)，先保存低位
+	fmt.Println("my big value", big>>8, big&0xf)                                                 // 3 5
+	fmt.Println("my little value", little)                                                       //5
+	fmt.Println("my little value", *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&big)) + 1))) //3
+
+	arr := []int{1, 2, 3, 4}
+	ptr := uintptr(unsafe.Pointer(&arr[1]))
+	qtr := uintptr(unsafe.Pointer(&arr[0])) + unsafe.Sizeof(arr[0])
+	fmt.Println("p q addr value", ptr, strconv.FormatInt(int64(ptr), 16), qtr, strconv.FormatInt(int64(qtr), 16))
+
+	barr := []byte{97, 66, 64, 65}
+	str := BytesToStr(barr)
+	fmt.Println(str)
+
+	//字符串的字节数组按照字符内容从左到右存储
+	str = "this is a str"
+	mystr := *(*MyStr)(unsafe.Pointer(&str))
+	fmt.Println(*(*uint8)(unsafe.Pointer(mystr.Data))) //t -> 116
+	fmt.Println(mystr.toStr())
 }
 
 func Float64bits(f float64) uint64 {
