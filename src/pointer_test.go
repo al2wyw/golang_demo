@@ -34,6 +34,16 @@ func (str MyStr) toStr() string {
 
 func TestPointer(t *testing.T) {
 
+	//牛逼啊!!!
+	var pt *int
+	if pt == nil {
+		fmt.Println("pt addr is nil")
+	}
+	if &pt != nil {
+		fmt.Println("pt2pt addr is not nil")
+	}
+	//牛逼啊!!!
+
 	i := 10
 	p := &i
 	fp := (*float32)(unsafe.Pointer(p))

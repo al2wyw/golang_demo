@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -221,6 +222,23 @@ func TestInterface(t *testing.T) {
 	fmt.Printf("addr %p, %p, %p \n", factory, &factory, unsafe.Pointer(&factory))
 	fmt.Println(reflect.TypeOf(softFactory))
 	fmt.Println(reflect.TypeOf(factory))
+
+	//参考 调用方	接收方 的规则表格//
+	var errorInfPtrType = reflect.TypeOf((*error)(nil))         //kind ptr
+	var errorInfType = errorInfPtrType.Elem()                   //kind interface
+	var errorT = reflect.TypeOf((error)(nil))                   // nil
+	var errorStructPtrType = reflect.TypeOf(errors.New("test")) //kind ptr
+	var errorStructType = errorStructPtrType.Elem()             //kind struct New return a ptr of struct
+	if errorT != nil && errorT.AssignableTo(errorInfType) {
+		fmt.Println("nothing")
+	}
+	if errorStructPtrType.AssignableTo(errorInfType) {
+		fmt.Println("interface = &struct{}")
+	}
+	if errorStructType.AssignableTo(errorInfType) {
+		fmt.Println("interface = struct{}")
+	}
+	//参考 调用方	接收方 的规则表格//
 }
 
 //kind 和 type 自定义类型必然不同 kind 比 type 更抽象

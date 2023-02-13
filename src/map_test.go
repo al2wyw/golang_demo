@@ -12,6 +12,17 @@ type Person struct {
 }
 
 func TestMap(t *testing.T) {
+	var myNilDic map[string]Person
+	fmt.Println(myNilDic)
+	for _, val := range myNilDic {
+		fmt.Println(val)
+	}
+	fmt.Println(myNilDic["test"])
+	if val, ok := myNilDic["test"]; ok {
+		fmt.Println("myNilDic ok", val, ok)
+	}
+	// myNilDic["test"] = Person{} //panic
+
 	dict := make(map[string]string)
 	dict["test"] = "1"
 	dict["value"] = "2"

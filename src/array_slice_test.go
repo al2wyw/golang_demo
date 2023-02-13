@@ -9,6 +9,12 @@ import (
 
 func TestArray(f *testing.T) {
 
+	var myNilArr []byte
+	fmt.Println(string(myNilArr))
+	for _, val := range myNilArr {
+		fmt.Println(val)
+	}
+
 	balance := [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0} //balance是数组
 	fmt.Println("balance", balance)
 

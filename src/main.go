@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type ByteSlice []byte
@@ -24,40 +23,20 @@ func main() {
 
 	ret, _ := compute(10, 10, "+")
 	fmt.Println(ret)
-}
 
-type response struct {
-	url string
-	err error
-	res []byte
-}
-
-func request(ctx context.Context, url string, ch chan<- *response) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	http.HandleFunc("/test", func(writer http.ResponseWriter, request *http.Request) {
+		time.Sleep(time.Second)
+		writer.WriteHeader(200)
+		size, err := fmt.Fprint(writer, `{"name": "test", "status": 200, "birth": "2019-01-01", "gender": true, "amount": 200.02}`)
+		if err != nil {
+			fmt.Println("error", err)
+		}
+		fmt.Println("write byte", size)
+	})
+	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
-		ch <- &response{url, err, nil}
-		return
+		fmt.Println(err)
 	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		ch <- &response{url, err, nil}
-		return
-	}
-	defer resp.Body.Close() // always close
-
-	if resp.StatusCode != http.StatusOK {
-		ch <- &response{url, errors.New(resp.Status), nil}
-		return
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		ch <- &response{url, errors.New("read body failed"), nil}
-		return
-	}
-
-	ch <- &response{url, nil, body}
 }
 
 func compute(a, b int, c string) (int, error) {
