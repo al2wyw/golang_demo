@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"sync"
 	"testing"
 	"time"
 )
@@ -91,4 +93,150 @@ func TestSelect(t *testing.T) {
 	_ = <-time.After(1 * time.Second)
 	timeout <- true
 	fmt.Println("testSelect end")
+}
+
+type SafeClosable interface {
+	isClosed() bool
+	safeWrite(val interface{}) bool
+	safeClose() bool
+	safeRead() (interface{}, bool)
+}
+
+type MyChannel struct {
+	C      chan interface{}
+	locker sync.Mutex
+	closed bool
+	//once sync.Once
+	//closed unsafe.Pointer //atomic 不保证可见性
+}
+
+func (m *MyChannel) safeRead() (interface{}, bool) {
+	ret, ok := <-m.C
+	return ret, ok
+}
+
+func (m *MyChannel) safeWrite(val interface{}) bool {
+	if m.closed {
+		return false
+	}
+	m.locker.Lock()
+	defer m.locker.Unlock()
+	if m.closed {
+		return false
+	}
+	m.C <- val
+	return true
+}
+
+func (m *MyChannel) isClosed() bool {
+	return m.closed
+	//return *(*bool)(atomic.LoadPointer(&m.closed))
+}
+
+func (m *MyChannel) safeClose() bool {
+	/*
+		m.once.Do(func() {
+			m.closed = true
+			//atomic.StorePointer(&m.closed, unsafe.Pointer(&flag))
+			close(m.C)
+		})
+	*/
+	if m.closed {
+		return true
+	}
+	m.locker.Lock()
+	defer m.locker.Unlock()
+	if m.closed {
+		return true
+	}
+	close(m.C)
+	m.closed = true
+	return m.closed
+}
+
+type MyCloseChannel struct {
+	C      chan interface{}
+	close  chan struct{} //信号
+	locker sync.Mutex
+	once   sync.Once
+	closed bool
+}
+
+func (m *MyCloseChannel) isClosed() bool {
+	return m.closed
+}
+
+func (m *MyCloseChannel) safeWrite(val interface{}) bool {
+	if m.closed {
+		return false
+	}
+	select {
+	case <-m.close:
+		m.once.Do(func() {
+			close(m.C)
+		})
+		return false
+	case m.C <- val:
+		return true
+	}
+}
+
+func (m *MyCloseChannel) safeClose() bool {
+	if m.closed {
+		return true
+	}
+	close(m.close)
+	m.closed = true
+	return true
+}
+
+func (m *MyCloseChannel) safeRead() (interface{}, bool) {
+	ret, ok := <-m.C
+	return ret, ok
+}
+
+func TestSafeClose(t *testing.T) {
+	SafeClose(&MyChannel{C: make(chan interface{})})
+	SafeClose(&MyCloseChannel{C: make(chan interface{}), close: make(chan struct{})})
+}
+
+func SafeClose(safe SafeClosable) {
+	rand.Seed(time.Now().UnixNano())
+	var wg sync.WaitGroup
+
+	loop := 10
+	wg.Add(loop)
+	// consumer
+	for i := 0; i < loop; i++ {
+		go func(h int) {
+			defer wg.Done()
+			for {
+				ret, ok := safe.safeRead()
+				if !ok {
+					break
+				}
+				fmt.Println("consume", ret, h)
+			}
+		}(i)
+	}
+	wg.Add(loop)
+	// producer
+	for i := 0; i < loop; i++ {
+		go func(h int) {
+			defer wg.Done()
+			for {
+				value := rand.Intn(1000)
+				if !safe.safeWrite(value) {
+					break
+				}
+				if value > 980 {
+					safe.safeClose()
+					break
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
 }

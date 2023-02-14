@@ -9,12 +9,6 @@ import (
 )
 
 func TestWait(t *testing.T) {
-	testWaitG()
-
-	testMutex()
-}
-
-func testWaitG() {
 	ch := make(chan string)
 	wg := new(sync.WaitGroup)
 
@@ -37,7 +31,7 @@ func testWaitG() {
 var compactCount int64 = 0
 var lock = new(sync.Mutex)
 
-func testMutex() {
+func TestMutex(t *testing.T) {
 	wg := new(sync.WaitGroup)
 	loop := 100
 	wg.Add(loop)
@@ -53,4 +47,21 @@ func testMutex() {
 	}
 
 	wg.Wait()
+}
+
+func TestSchedule(t *testing.T) {
+	runtime.GOMAXPROCS(1)
+	go func() {
+		for {
+		}
+	}()
+	time.Sleep(1 * time.Second)
+	// can not run ???
+	go func() {
+		for i := 0; i < 10; i++ {
+			fmt.Println(i)
+		}
+	}()
+
+	time.Sleep(3 * time.Second)
 }
