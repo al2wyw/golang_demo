@@ -10,6 +10,11 @@ import (
 )
 
 func TestStr(t *testing.T) {
+
+	var tr = new(string)
+	*tr = "test" //地址保持不变
+	fmt.Println(tr)
+
 	str := "test123456789"
 	str1 := "test" + strconv.Itoa(123456789)
 	str2 := "test123456789"

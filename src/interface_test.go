@@ -8,6 +8,42 @@ import (
 	"unsafe"
 )
 
+//自动继承
+type Base1 interface {
+	Produce() bool
+	Safe() bool
+}
+
+type Base2 interface {
+	Produce() bool
+	Safe() bool
+	Write() bool
+}
+
+type MyImp int
+
+func (m MyImp) Produce() bool {
+	panic("implement me")
+}
+
+func (m MyImp) Safe() bool {
+	panic("implement me")
+}
+
+func (m MyImp) Write() bool {
+	panic("implement me")
+}
+
+func TestAutoExtend(t *testing.T) {
+	var u MyImp = 10
+	var base1 Base1 = u
+	var base2 Base2 = u
+	fmt.Println(base1, base2)
+
+	base1 = base2
+	fmt.Println(base1)
+}
+
 type Factory interface {
 	Produce() bool
 	Consume() bool

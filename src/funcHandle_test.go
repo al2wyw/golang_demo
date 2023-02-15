@@ -32,11 +32,12 @@ type Func interface {
 	DoFun(v interface{})
 }
 
-func FuncDriver(fun Func) {
-	fmt.Println("func interface method called", fun)
+func FuncDriver(fun Func, v interface{}) {
+	fun.DoFun(v)
+	fmt.Println("func interface method called")
 }
 
-//以下是对以上接口函数调用的优化
+//以下是对以上接口函数调用的优化: 把任意的func(interface{})函数转化为Func类型传入FuncDriver
 
 //在其他语言里面，有些函数可以直接作为参数传递，有些是以函数指针进行传递，但是都没有办法像go这样可以给函数类型“增加”新方法
 type FuncHandle func(interface{})
@@ -47,8 +48,7 @@ func (fun FuncHandle) DoFun(v interface{}) {
 
 func FuncCaller(v interface{}, fun func(interface{})) {
 	h := FuncHandle(fun) //类型装换
-	h.DoFun(v)
-	FuncDriver(h)
+	FuncDriver(h, v)
 }
 
 /////////////接口型函数的demo////////////
