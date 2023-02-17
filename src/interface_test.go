@@ -232,7 +232,7 @@ func TestReflect(t *testing.T) {
 	factory.Consume()
 	methodCall(rv, "Method")
 	methodCall(rv, "Consume") //method Consume not found
-	methodCall(prv, "Method") //这个怎么会调的到???
+	methodCall(prv, "Method") //这个怎么会调的到
 	methodCall(prv, "Consume")
 
 	//必须是指针，才是addressable的
@@ -242,7 +242,7 @@ func TestReflect(t *testing.T) {
 
 	ptr := uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)
 	test := (*string)(unsafe.Pointer(ptr)) //这个回转pinter为什么告警，但是这样就不会告警: test := (*string)(unsafe.Pointer(uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)))
-	//栈扩容缩容导致ptr的地址值无效 ???
+	//栈扩容缩容导致ptr的地址值无效
 
 	*test = "test again"
 

@@ -29,39 +29,75 @@ func TestWait(t *testing.T) {
 }
 
 var compactCount int64 = 0
-var lock = new(sync.Mutex)
+var ret float64
+var loopO = 1000000
 
 func TestMutex(t *testing.T) {
+	Concurr(1) //只有一个cpu可以运行协程, 不需要考虑竞态， 但是协程互相切换时应该需要考虑脏读(python的多线程问题) ???
+	fmt.Println("================")
+	ConcurrV2(1)
+	fmt.Println("================")
+	//Concurr(2) //多个cpu同时运行协程，会出现竞态
+}
+
+func Concurr(concurrency int) {
 	wg := new(sync.WaitGroup)
-	loop := 100
+	loop := loopO
 	wg.Add(loop)
 
-	fmt.Println(runtime.GOMAXPROCS(0), runtime.NumCPU())
+	fmt.Println(runtime.GOMAXPROCS(concurrency), runtime.NumCPU())
 	for i := 0; i < loop; i++ {
 		go func() {
-			//lock.Lock()
-			defer wg.Done() //; lock.Unlock()
+			defer wg.Done()
+			ret = 10.34 / 2.34
 			compactCount++
-			fmt.Println("compactCount", compactCount) //没有锁顺序错乱但是结果是对的，没有出现互相覆盖， wg有同步能力???
+			//fmt.Println("compactCount", compactCount) //concurrency > 1 时 没有锁顺序错乱但是结果是对的，没有出现互相覆盖， wg有同步能力???
 		}()
 	}
 
 	wg.Wait()
+	fmt.Println("compactCount", compactCount)
+}
+
+func ConcurrV2(concurrency int) {
+	wg := new(sync.WaitGroup)
+
+	loop := 100000
+	numG := loopO / loop
+	wg.Add(numG)
+	fmt.Println(runtime.GOMAXPROCS(concurrency), runtime.NumCPU())
+	for i := 0; i < numG; i++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < loop; i++ {
+				ret = 10.34 / 2.34
+				compactCount++
+			}
+		}()
+	}
+
+	wg.Wait()
+	fmt.Println("compactCount", compactCount)
 }
 
 func TestSchedule(t *testing.T) {
 	runtime.GOMAXPROCS(1)
-	go func() {
-		for {
-		}
-	}()
-	time.Sleep(1 * time.Second)
-	// can not run ???
+
+	for i := 0; i < 100; i++ {
+		go func() {
+			for {
+
+			}
+		}()
+	}
+	time.Sleep(3 * time.Second)
+
+	// can run， 抢占式调度: G运行时间超过forcePreemptNS(10ms)，则抢占这个P
 	go func() {
 		for i := 0; i < 10; i++ {
 			fmt.Println(i)
 		}
 	}()
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }
