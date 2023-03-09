@@ -110,3 +110,16 @@ func BytesToStr(arr []byte) string {
 	//避免内存拷贝
 	return *(*string)(unsafe.Pointer(&arr))
 }
+
+func TestSize(t *testing.T) {
+	var a int = 1 //64bits sys takes up 64bits, 32bits sys takes up 32bits (int != int32)
+	var b int8 = 2
+	var c int16 = 3
+	var d int32 = 4
+	var e int64 = 5
+	fmt.Println(unsafe.Sizeof(a))
+	fmt.Println(unsafe.Sizeof(b))
+	fmt.Println(unsafe.Sizeof(c))
+	fmt.Println(unsafe.Sizeof(d))
+	fmt.Println(unsafe.Sizeof(e))
+}

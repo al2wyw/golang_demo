@@ -70,6 +70,31 @@ func TestRoutineDefer(t *testing.T) {
 	wg.Wait()
 }
 
+func TestFatalErrorCannotRecover(t *testing.T) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("panic error", err)
+		}
+	}()
+	fatalMap()
+
+	fmt.Println("done") //never executed
+}
+
+//fatalMap fatal error: concurrent map read and map write
+func fatalMap() {
+	loop := 100000
+	m := map[string]int{}
+	go func() {
+		for i := 0; i < loop; i++ {
+			m["煎鱼1"] = 1
+		}
+	}()
+	for i := 0; i < loop; i++ {
+		_ = m["煎鱼2"]
+	}
+}
+
 func testDefer() {
 	var i = 1
 

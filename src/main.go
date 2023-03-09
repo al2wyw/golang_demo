@@ -3,9 +3,24 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
+	"io/ioutil"
+	"os"
+	"strconv"
 )
+
+type MyInf interface {
+	Action(a int32) string
+}
+
+type MyData struct {
+	Name   string
+	Value  int32
+	Amount int32
+}
+
+func (m MyData) Action(a int32) string {
+	return strconv.Itoa(int(a))
+}
 
 type ByteSlice []byte
 
@@ -22,21 +37,19 @@ func main() {
 	test = append(test, byte(43))
 
 	ret, _ := compute(10, 10, "+")
-	fmt.Println(ret)
 
-	http.HandleFunc("/test", func(writer http.ResponseWriter, request *http.Request) {
-		time.Sleep(time.Second)
-		writer.WriteHeader(200)
-		size, err := fmt.Fprint(writer, `{"name": "test", "status": 200, "birth": "2019-01-01", "gender": true, "amount": 200.02}`)
-		if err != nil {
-			fmt.Println("error", err)
-		}
-		fmt.Println("write byte", size)
-	})
-	err := http.ListenAndServe(":8000", nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	str := readStr()
+	var data = MyData{str, 10, 10}
+	my := data
+	var inf MyInf = my
+
+	fmt.Println(ret, inf)
+}
+
+func readStr() string {
+	path, _ := os.Getwd()
+	bys, _ := ioutil.ReadFile(path + "/test.txt")
+	return string(bys)
 }
 
 func compute(a, b int, c string) (int, error) {
