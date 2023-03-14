@@ -178,6 +178,9 @@ func testInterPointer(inter interface{}) {
 	if _, ok := inter.(Factory); ok {
 		fmt.Println("Factory")
 	}
+	if _, ok := inter.(*Factory); ok {
+		fmt.Println("*Factory")
+	}
 }
 
 func testInter(inter interface{}) {
@@ -187,6 +190,7 @@ func testInter(inter interface{}) {
 	if _, ok := inter.(DrinkFactory); ok {
 		fmt.Println("DrinkFactory")
 	}
+	//如果接收方都是值方法, 以下也是ok
 	if _, ok := inter.(Factory); ok {
 		fmt.Println("Factory")
 	}

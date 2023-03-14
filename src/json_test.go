@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+/*
+如果使用map[string]interface{}来反序列化:
+bool 代表 JSON booleans,
+float64 代表 JSON numbers,
+string 代表 JSON strings,
+nil 代表 JSON null
+*/
+
 type Time time.Time
 
 const (

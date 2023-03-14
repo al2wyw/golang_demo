@@ -47,7 +47,8 @@ func (fun FuncHandle) DoFun(v interface{}) {
 }
 
 func FuncCaller(v interface{}, fun func(interface{})) {
-	h := FuncHandle(fun) //类型装换
+	//h := FuncHandle(fun) //类型装换
+	var h FuncHandle = fun // var em EmptyInt = val //error
 	FuncDriver(h, v)
 }
 
