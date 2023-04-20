@@ -42,11 +42,17 @@ func (t Time) String() string {
 
 // Data 也可以利用Data来实现 UnmarshalJSON 方法来实现特殊的反序列化逻辑
 type Data struct {
-	Status int             `json:"status"`
-	Name   string          `json:"name"`
-	Gender bool            `json:"gender"`
-	Amount decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
-	Birth  Time            `json:"birth"`
+	Status  int             `json:"status"`
+	Name    string          `json:"name"`
+	Gender  bool            `json:"gender"`
+	Amount  decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
+	Birth   Time            `json:"birth"`
+	Address *Address        `json:"address,omitempty"`
+}
+
+type Address struct {
+	District string `json:"district"`
+	Street   string `json:"street"`
 }
 
 func TestJson(t *testing.T) {
@@ -68,5 +74,6 @@ func testJson() {
 		fmt.Println("json deserialize error", err)
 		return
 	}
-	fmt.Println("json deserialize", person)
+	str, _ := json.Marshal(person)
+	fmt.Println("json deserialize", string(str))
 }

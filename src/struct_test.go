@@ -245,6 +245,10 @@ func (f *fruit) MyName() string {
 	return f.Name + " from fruit"
 }
 
+func (f *fruit) getFruit() Nameable {
+	return f
+}
+
 type apple struct {
 	fruit
 	Price float64
@@ -266,6 +270,9 @@ func (f *orange) MyName() string {
 func TestStructReplace(t *testing.T) {
 	ap := apple{fruit{Name: "apple"}, 234.44}
 	or := orange{fruit{"orange"}, "red"}
+
+	fmt.Println(ap.getFruit().MyName(), ap.MyName()) //from fruit from apple !!!
+
 	printFruitPtr((*fruit)(unsafe.Pointer(&ap)))
 	printFruitPtr((*fruit)(unsafe.Pointer(&or)))
 
