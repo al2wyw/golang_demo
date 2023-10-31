@@ -77,3 +77,80 @@ func testJson() {
 	str, _ := json.Marshal(person)
 	fmt.Println("json deserialize", string(str))
 }
+
+type CommonReq struct {
+	Interface interface{} `json:"interface,omitempty"`
+	Timestamp int64       `json:"timestamp"`
+	RequestId string      `json:"requestId"`
+}
+
+type Interface1 struct {
+	Name string `json:"name"`
+	Id   string `json:"id"`
+}
+
+type Interface2 struct {
+	Code  string `json:"code"`
+	Value int64  `json:"value"`
+}
+
+type CommonResp struct {
+	Data          interface{} `json:"data,omitempty"`
+	Version       string      `json:"version"`
+	ReturnCode    int         `json:"returnCode"`
+	ReturnMessage string      `json:"returnMessage,omitempty"`
+}
+
+type Data1 struct {
+	Name   string `json:"name"`
+	Gender bool   `json:"gender"`
+}
+
+type Data2 struct {
+	IdList []int64 `json:"idList"`
+}
+
+func TestCommonStructJson(t *testing.T) {
+	req := &CommonReq{}
+	req.RequestId = "dsfdf-344-dfgg-3444"
+	req.Timestamp = time.Now().Unix()
+	req.Interface = &Interface1{
+		Name: "Peter",
+		Id:   "id card number",
+	}
+	marshal(req)
+	req.Interface = &Interface2{
+		Code:  "valid code",
+		Value: 3455555,
+	}
+	marshal(req)
+
+	var data1 = []byte(`{"returnCode": 200, "ReturnMessage": "OK", "Version": "1.0", "data": {"name":"Peter","gender":true}}`)
+	var data2 = []byte(`{"returnCode": 200, "ReturnMessage": "OK", "Version": "1.0", "data": {"idList":[213423,421343,4333]}}`)
+	resp := &CommonResp{}
+	dat1 := &Data1{}
+	unmarshal(data1, resp)
+	fmt.Println("json deserialize", dat1.Name)
+
+	resp.Data = dat1
+	unmarshal(data1, resp)
+	fmt.Println("json deserialize", dat1.Name)
+
+	dat2 := &Data2{}
+	resp.Data = dat2
+	unmarshal(data2, resp)
+	fmt.Println("json deserialize", dat2.IdList)
+}
+
+func marshal(req interface{}) {
+	str, _ := json.Marshal(req)
+	fmt.Println("json serialize", string(str))
+}
+
+func unmarshal(req []byte, resp interface{}) {
+	err := json.Unmarshal(req, resp)
+	if err != nil {
+		fmt.Println("json deserialize error", err)
+	}
+	fmt.Println("json deserialize", resp)
+}
