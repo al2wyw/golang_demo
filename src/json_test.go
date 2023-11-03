@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/asaskevich/govalidator"
 	"github.com/shopspring/decimal"
 	"testing"
 	"time"
@@ -42,7 +43,7 @@ func (t Time) String() string {
 
 // Data 也可以利用Data来实现 UnmarshalJSON 方法来实现特殊的反序列化逻辑
 type Data struct {
-	Status  int             `json:"status"`
+	Status  int             `json:"status"  valid:"required,range(1|10)~invalid pageSize"`
 	Name    string          `json:"name"`
 	Gender  bool            `json:"gender"`
 	Amount  decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
@@ -60,7 +61,7 @@ func TestJson(t *testing.T) {
 }
 
 func testJson() {
-	var data = []byte(`{"status": 200, "birth": "2019-01-01", "gender": true, "amount": 200.02}`)
+	var data = []byte(`{"status": 0, "birth": "2019-01-01", "gender": true, "amount": 200.02}`)
 	res := make(map[string]interface{})
 	if err := json.Unmarshal(data, &res); err != nil {
 		fmt.Println("json deserialize error", err)
@@ -74,6 +75,11 @@ func testJson() {
 		fmt.Println("json deserialize error", err)
 		return
 	}
+	ok, err := govalidator.ValidateStruct(person)
+	if !ok || err != nil {
+		fmt.Println("error person", person)
+	}
+
 	str, _ := json.Marshal(person)
 	fmt.Println("json deserialize", string(str))
 }

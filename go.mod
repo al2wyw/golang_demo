@@ -3,6 +3,7 @@ module golang_demo
 go 1.17
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/jinzhu/copier v0.3.5
 	github.com/jinzhu/gorm v1.9.15
 	github.com/pkg/errors v0.9.1
