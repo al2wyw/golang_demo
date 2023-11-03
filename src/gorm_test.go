@@ -23,14 +23,29 @@ func TestGorm(tt *testing.T) {
 
 	data := &model.DataTypeTest{}
 	//id = 2 version is null
-	if err := db.Model(data).Where("id = ?", 2).First(data).Error; err != nil {
+	if err := db.Where("id = ?", 2).First(data).Error; err != nil {
 		fmt.Printf("find data error:%v\n", err)
 	}
 	fmt.Printf("data is %+v", data)
 
-	if err := db.Model(data).Save(data).Error; err != nil {
+	if err := db.Save(data).Error; err != nil {
 		fmt.Printf("save data error:%v\n", err)
 	}
+
+	//str := ""
+	//db.Model(data).UpdateColumns(&model.DataTypeTest{Content: &str})//work
+	//db.Model(data).UpdateColumns(&model.DataTypeTest{Content: nil})//not work
+	//db.Model(data).UpdateColumns(map[string]interface{}{"content": ""})//work
+	//db.Model(data).UpdateColumns(map[string]interface{}{"content": nil})//not work
+
+	db.Transaction(func(tx *gorm.DB) error {
+		tx.Model(data).UpdateColumns(&model.DataTypeTest{Amount: 9912.23})
+
+		updated := &model.DataTypeTest{}
+		tx.Where(&model.DataTypeTest{ID: 2}).First(updated)
+		fmt.Printf("updated is %+v", updated)
+		return fmt.Errorf("rollback")
+	})
 }
 
 func getDB() *gorm.DB {
