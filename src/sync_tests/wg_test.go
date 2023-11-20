@@ -25,7 +25,7 @@ func TestWait(t *testing.T) {
 	ch <- "cmd.1"
 	ch <- "cmd.2"
 	close(ch)
-	wg.Wait()
+	wg.Wait() //不关闭ch 则会 fatal error: all goroutines are asleep - deadlock!
 }
 
 var compactCount int64 = 0
