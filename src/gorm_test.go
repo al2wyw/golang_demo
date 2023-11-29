@@ -6,6 +6,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"golang_demo/src/model"
 	"testing"
+	"time"
 )
 
 type DBConf struct {
@@ -14,6 +15,25 @@ type DBConf struct {
 	User     string `valid:"ascii,required"`
 	Pass     string `valid:"ascii,required"`
 	DataBase string `valid:"ascii,required"`
+}
+
+// TestGorm 数据库create返回id
+func TestGormCreate(tt *testing.T) {
+	db := getDB()
+
+	data := &model.DataTypeTest{
+		Amount:      34.34,
+		Content:     "test",
+		Version:     "1",
+		GmtCreate:   time.Now(),
+		GmtModified: time.Now(),
+	}
+
+	if err := db.Omit().Create(data).Error; err != nil {
+		fmt.Printf("create data error:%v\n", err)
+	}
+
+	fmt.Println(data.ID)
 }
 
 // TestGorm 数据库空值测试
