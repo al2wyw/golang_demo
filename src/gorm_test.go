@@ -17,6 +17,21 @@ type DBConf struct {
 	DataBase string `valid:"ascii,required"`
 }
 
+func TestGormSubQuery(t *testing.T) {
+	db := getDB()
+	var ret []model.Person
+
+	sdb := db.Model(&model.DataTypeTest{}).Select("id")
+	sdb = sdb.Where("version = ?", 1)
+	query := sdb.SubQuery()
+
+	//db = db.Model(&model.DataTypeTest{}).Select("id")
+	//db = db.Where("version = ?", 1)
+	//query := db.SubQuery()
+
+	db.Model(&model.Person{}).Where("id in (?)", query).Find(&ret)
+}
+
 // TestGorm 数据库create返回id
 func TestGormCreate(tt *testing.T) {
 	db := getDB()
@@ -76,5 +91,6 @@ func getDB() *gorm.DB {
 	if db == nil || err != nil {
 		fmt.Printf("DB connection error:%v", err)
 	}
+	db.LogMode(true)
 	return db
 }
