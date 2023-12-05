@@ -4,6 +4,16 @@
 
 package model
 
+//CREATE TABLE `person` (
+//  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+//  `user_name` varchar(128) DEFAULT NULL,
+//  `pass_word` varchar(45) DEFAULT NULL,
+//  `real_name` varchar(128) DEFAULT NULL,
+//  `version` int(10) unsigned NOT NULL DEFAULT '1',
+//  PRIMARY KEY (`id`),
+//  KEY `idx_name` (`user_name`)
+//) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4
+
 const TableNamePerson = "person"
 
 // Person mapped from table <person>

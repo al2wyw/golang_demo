@@ -4,6 +4,17 @@ import (
 	"time"
 )
 
+//CREATE TABLE `data_type_test` (
+//  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+//  `amount` decimal(10,6) DEFAULT NULL,
+//  `deleted` tinyint(4) DEFAULT NULL,
+//  `version` int(11) DEFAULT NULL,
+//  `gmt_create` datetime DEFAULT NULL,
+//  `gmt_modified` datetime DEFAULT NULL,
+//  `content` varchar(45) DEFAULT NULL,
+//  PRIMARY KEY (`id`)
+//) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4
+
 const TableNameDataTypeTest = "data_type_test"
 
 // DataTypeTest mapped from table <data_type_test>
