@@ -75,6 +75,9 @@ func TestGorm(tt *testing.T) {
 	//db.Model(data).UpdateColumns(map[string]interface{}{"content": ""})//work
 	//db.Model(data).UpdateColumns(map[string]interface{}{"content": nil})//not work
 
+	//db.Model(data).Where(map[string]interface{}{"version": nil}) -> (`data_type_test`.`version` IS NULL)
+	//db.Model(data).Where("version IS NULL") -> (version IS NULL)
+
 	db.Transaction(func(tx *gorm.DB) error {
 		tx.Model(data).UpdateColumns(&model.DataTypeTest{Amount: 9912.23})
 

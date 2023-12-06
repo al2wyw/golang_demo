@@ -49,6 +49,7 @@ type Data struct {
 	Amount  decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
 	Birth   Time            `json:"birth"`
 	Address *Address        `json:"address,omitempty"`
+	Values  []int           `json:"values"`
 }
 
 type Address struct {
@@ -81,7 +82,11 @@ func testJson() {
 	}
 
 	str, _ := json.Marshal(person)
-	fmt.Println("json deserialize", string(str))
+	fmt.Println("json serialize", string(str))
+
+	person.Values = []int{}
+	str, _ = json.Marshal(person)
+	fmt.Println("json serialize", string(str))
 }
 
 type CommonReq struct {
