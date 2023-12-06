@@ -29,6 +29,8 @@ func TestGormSubQuery(t *testing.T) {
 	//db = db.Where("version = ?", 1)
 	//query := db.SubQuery()
 
+	//Scope -> DB, Search, Value; Value -> table name or Search.tableName -> table name
+	//queryCallback -> scope.IndirectValue() -> scope.TableName()
 	db.Model(&model.Person{}).Where("id in (?)", query).Find(&ret)
 }
 
