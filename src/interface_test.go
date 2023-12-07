@@ -238,11 +238,23 @@ func TestReflect(t *testing.T) {
 	methodCall(rv, "Consume") //method Consume not found
 	methodCall(prv, "Method") //这个怎么会调的到
 	methodCall(prv, "Consume")
+}
+
+func TestValue(t *testing.T) {
+	//CanAddr 是 CanSet 的必要不充分条件。一个 Value 如果 CanAddr, 不一定 CanSet, struct 的 unexported field 不能set
+
+	factory := SoftDrinkFactory{
+		DrinkFactory{"Juice-Product"},
+		"Juice"}
 
 	//必须是指针，才是addressable的
-	reflect.ValueOf(&(factory.ProductName)).Elem().SetString("test") //field set
+	prodValPtr := reflect.ValueOf(&(factory.ProductName))
+	fmt.Println(prodValPtr.Kind(), prodValPtr.CanSet(), prodValPtr.CanAddr(), prodValPtr.CanInterface())
+	prodVal := prodValPtr.Elem()
+	fmt.Println(prodVal.Kind(), prodVal.CanSet(), prodVal.CanAddr(), prodVal.CanInterface())
+	prodVal.SetString("test") //field set
 
-	methodCall(prv, "Consume")
+	fmt.Println(factory)
 
 	ptr := uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)
 	test := (*string)(unsafe.Pointer(ptr)) //这个回转pinter为什么告警，但是这样就不会告警: test := (*string)(unsafe.Pointer(uintptr(unsafe.Pointer(&factory)) + unsafe.Offsetof(factory.ProductName)))
@@ -250,7 +262,27 @@ func TestReflect(t *testing.T) {
 
 	*test = "test again"
 
-	methodCall(prv, "Consume")
+	fmt.Println(factory)
+
+	var f Factory = &SoftDrinkFactory{
+		DrinkFactory{"Juice-Product"},
+		"Juice"}
+
+	structVal := reflect.ValueOf(f).Elem() //f is ptr
+	structVal.FieldByName("ProductName").SetString("test now again")
+	fmt.Println(structVal)
+
+	str := "test"
+	fmt.Println(reflect.ValueOf(str).Index(0)) // can not set
+
+	s := []int{1, 2, 3}
+	reflect.ValueOf(s).Index(0).SetInt(10)
+	fmt.Println(s)
+
+	m := map[string]string{"1": "test1"}
+	fmt.Println(reflect.ValueOf(m).MapIndex(reflect.ValueOf("1")).Interface())
+	reflect.ValueOf(m).SetMapIndex(reflect.ValueOf("1"), reflect.ValueOf("test2"))
+	fmt.Println(m)
 }
 
 func TestInterface(t *testing.T) {
