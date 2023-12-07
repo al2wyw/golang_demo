@@ -96,7 +96,7 @@ func TestMethodCall(t *testing.T) {
 	b.SetPages()    // SetPages
 	bptr.SetPages() // SetPages golang会将其解释为*bptr.SetPages()
 
-	b.Pages()    // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组元素，可寻址的结构体字段 ，切片 ，指针引用等，(Book{}).Pages() 会报错，字面量不可寻址
+	b.Pages()    // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组(数组赋值给变量)元素，可寻址的结构体(结构体赋值给变量)字段 ，切片的元素 ，指针引用等(map元素不可寻址)，(Book{}).Pages() 会报错，字面量不可寻址
 	bptr.Pages() // Pages
 	//Book{}.Pages()
 
