@@ -78,21 +78,29 @@ func TestSelect(t *testing.T) {
 	ch := make(chan int)
 	timeout := make(chan bool)
 	go func() {
+		flag := false
 		for {
 			select {
 			case v := <-ch:
 				fmt.Println("read from ch", v)
 			case <-timeout:
 				fmt.Println("read from timeout")
+				//flag = true
+				break //这个break不会跳出for
 				//default 一直执行，导致 CPU 忙转
 				//default:
 				//	fmt.Println("this is default")
 			}
+			if flag {
+				break
+			}
 		}
+		fmt.Println("go end")
 	}()
 	_ = <-time.After(1 * time.Second)
 	timeout <- true
 	fmt.Println("testSelect end")
+	time.Sleep(3 * time.Second)
 }
 
 type SafeClosable interface {
