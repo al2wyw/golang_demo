@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type EmptyInt int
@@ -73,4 +74,33 @@ func TestFunCaller(t *testing.T) {
 		fmt.Printf("%s: %v\n", m.Name, m.Type)
 	}
 
+}
+
+////////////函数增强demo/////////////
+type TargetFunHandle func(string) error
+
+func (fun TargetFunHandle) EnhanceFunc(arg string) error {
+	start := time.Now()
+	err := fun(arg)
+	fmt.Println(time.Since(start).Milliseconds())
+	return err
+}
+
+////////////函数增强demo/////////////
+
+func TestFunEnhancer(t *testing.T) {
+	err := TargetFunHandle(TargetFunc).EnhanceFunc("test")
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func TargetFunc(arg string) error {
+	val := reflect.ValueOf(arg)
+	if val.IsZero() {
+		return fmt.Errorf("arg is nill")
+	}
+	time.Sleep(1 * time.Second)
+	fmt.Println(val)
+	return nil
 }
