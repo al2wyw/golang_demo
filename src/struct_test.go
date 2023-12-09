@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/goinggo/mapstructure"
 	"github.com/jinzhu/copier"
 	"math"
 	"strconv"
@@ -223,14 +224,31 @@ var veh Vehicle = &Engine{}: 调用方是指针
 */
 
 func TestCopier(t *testing.T) {
-	car1 := Car{Name: "car"}
+	car1 := Car{Name: "car1"}
 	var car2 Car2
-	err := copier.Copy(&car2, &car1)
+	err := copier.Copy(&car2, car1)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	fmt.Println(car2)
+
+	car := &Car{}
+	source := map[string]interface{}{
+		"age":  1,
+		"name": "value",
+	}
+	err = mapstructure.Decode(source, car)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(*car)
+	source["age"] = 2
+	err = copier.Copy(car, source) // not supported
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(*car)
 }
 
 type Nameable interface {
