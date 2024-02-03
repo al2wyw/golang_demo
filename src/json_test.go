@@ -87,6 +87,12 @@ func testJson() {
 	person.Values = []int{}
 	str, _ = json.Marshal(person)
 	fmt.Println("json serialize", string(str))
+
+	str, _ = json.Marshal(struct{}{})
+	fmt.Println("json serialize", string(str))
+
+	str, _ = json.Marshal(nil)
+	fmt.Println("json serialize", string(str))
 }
 
 type CommonReq struct {
