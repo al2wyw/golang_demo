@@ -6,6 +6,12 @@ import (
 	"testing"
 )
 
+type myStr struct {
+	Id int
+}
+type myStrType myStr
+type myType int
+
 func TestDataType(t *testing.T) {
 	var bigVal int64 = 2
 	fmt.Println(bigVal)
@@ -29,4 +35,14 @@ func TestDataType(t *testing.T) {
 	fmt.Println(test, test == nil) // <nil> true
 
 	fmt.Printf("%p\n", in) // 0x0
+
+	var myInt myType = 1
+	fmt.Println("type", reflect.TypeOf(myInt))
+	fmt.Println("kind", reflect.TypeOf(myInt).Kind())
+	fmt.Println("value", reflect.ValueOf(myInt))
+
+	myStruct := myStrType{1}
+	fmt.Println("type", reflect.TypeOf(myStruct))
+	fmt.Println("kind", reflect.TypeOf(myStruct).Kind())
+	fmt.Println("value", reflect.ValueOf(myStruct))
 }
