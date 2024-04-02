@@ -111,6 +111,7 @@ type Interface2 struct {
 	Value int64  `json:"value"`
 }
 
+// CommonResp 反序列化的第一种实现方法
 type CommonResp struct {
 	Data          interface{} `json:"data,omitempty"`
 	Version       string      `json:"version"`
@@ -125,6 +126,23 @@ type Data1 struct {
 
 type Data2 struct {
 	IdList []int64 `json:"idList"`
+}
+
+// CommonBaseResp 反序列化的第二种实现方法
+type CommonBaseResp struct {
+	Version       string `json:"version"`
+	ReturnCode    int    `json:"returnCode"`
+	ReturnMessage string `json:"returnMessage,omitempty"`
+}
+
+type Data1Resp struct {
+	CommonBaseResp
+	Data Data1 `json:"data"`
+}
+
+type Data2Resp struct {
+	CommonBaseResp
+	Data Data2 `json:"data"`
 }
 
 func TestCommonStructJson(t *testing.T) {
@@ -157,6 +175,14 @@ func TestCommonStructJson(t *testing.T) {
 	resp.Data = dat2
 	unmarshal(data2, resp)
 	fmt.Println("json deserialize", dat2.IdList)
+
+	data1Resp := &Data1Resp{}
+	unmarshal(data1, data1Resp)
+	fmt.Println("json deserialize", data1Resp.Data.Name)
+
+	data2Resp := &Data2Resp{}
+	unmarshal(data2, data2Resp)
+	fmt.Println("json deserialize", data2Resp.Data.IdList)
 }
 
 func marshal(req interface{}) {

@@ -20,13 +20,13 @@ import (
 // net.core.netdev_max_backlog = 1000
 // net.ipv4.tcp_max_syn_backlog = 4096
 
-var count = 0
+var _count = 0
 
 func MyConnect(ctx context.Context, c net.Conn) context.Context {
 	fmt.Println(time.Now(), "conn remote address", c.RemoteAddr().String())
-	if count < 1 {
+	if _count < 1 {
 		time.Sleep(1 * time.Hour)
-		count += 1
+		_count += 1
 	}
 	return ctx
 }
