@@ -5,6 +5,7 @@ import (
 	"github.com/goinggo/mapstructure"
 	"github.com/jinzhu/copier"
 	"math"
+	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -66,18 +67,18 @@ func TestStruct(t *testing.T) {
 	fmt.Println(person)
 }
 
-//（1）如果方法需要修改receiver，那么必须使用指针方法；
-//（2）如果receiver是一个很大的结构体，考虑到效率，应该使用指针方法；
-//（3）一致性。如果一些方法必须是指针receiver，那么其它方法也应该使用指针receiver；
-//（4）对于一些基本类型、切片、或者小的结构体，使用value receiver效率会更高一些。
+// （1）如果方法需要修改receiver，那么必须使用指针方法；
+// （2）如果receiver是一个很大的结构体，考虑到效率，应该使用指针方法；
+// （3）一致性。如果一些方法必须是指针receiver，那么其它方法也应该使用指针receiver；
+// （4）对于一些基本类型、切片、或者小的结构体，使用value receiver效率会更高一些。
 type Book struct{}
 
-//值方法，Book为 receiver type
+// 值方法，Book为 receiver type
 func (b Book) SetPages() {
 	fmt.Println("SetPages")
 }
 
-//指针方法，*Book为 receiver type
+// 指针方法，*Book为 receiver type
 func (b *Book) Pages() {
 	fmt.Println("Pages")
 }
@@ -97,7 +98,7 @@ func TestMethodCall(t *testing.T) {
 	b.SetPages()    // SetPages
 	bptr.SetPages() // SetPages golang会将其解释为*bptr.SetPages()
 
-	b.Pages()    // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组(数组赋值给变量)元素，可寻址的结构体(结构体赋值给变量)字段 ，切片的元素 ，指针引用等(map元素不可寻址)，(Book{}).Pages() 会报错，字面量不可寻址
+	b.Pages()    // Pages golang会将其解释为&b.Pages()，但是必须是可寻址的值类型: 变量, 可寻址的数组(数组赋值给变量，通过变量和数组下标访问的元素)元素，可寻址的结构体(结构体赋值给变量)字段 ，切片的元素 ，指针引用等(map元素不可寻址)
 	bptr.Pages() // Pages
 	//Book{}.Pages()
 
@@ -110,7 +111,124 @@ func TestMethodCall(t *testing.T) {
 	//bookDict["k1"].Pages()
 }
 
-//多重继承
+type S struct {
+	A int
+	b int
+}
+
+func (s *S) canPrintPtr() {
+	fmt.Println("pointer print", *s)
+}
+
+func (s S) canPrint() {
+	fmt.Println("print", s)
+}
+
+// TestElemAddressable  只要值是可寻址的，就可以在值上直接调用指针方法， map的元素是不可寻址的(可以把元素声明成指针元素), slice的元素可寻址
+func TestElemAddressable(t *testing.T) {
+	dict := map[string]S{"A": {A: 1, b: 2}}
+	//dict["A"].canPrintPtr()
+	dict["A"].canPrint()
+
+	slice := []S{{A: 1, b: 2}}
+	slice[0].canPrintPtr()
+	slice[0].canPrint()
+
+	array := [1]S{{A: 1, b: 2}}
+	array[0].canPrintPtr()
+	array[0].canPrint()
+
+	//字面量有点奇怪，不要理会:
+	//S{A : 1, b: 2}.canPrintPtr()
+	(&S{A: 1, b: 2}).canPrintPtr()
+	S{A: 1, b: 2}.canPrint()
+	//map[string]S{"A": {A: 1, b: 2}}["A"].canPrintPtr()
+	map[string]S{"A": {A: 1, b: 2}}["A"].canPrint()
+	[]S{{A: 1, b: 2}}[0].canPrintPtr()
+	[]S{{A: 1, b: 2}}[0].canPrint()
+	//[1]S{{A: 1, b: 2}}[0].canPrintPtr()
+	[1]S{{A: 1, b: 2}}[0].canPrint()
+}
+
+// CanSet = CanAddr + exported struct field (struct的非导出字段FieldByName不可set)
+// CanAddr = an element of A slice, an element of an addressable array, A field of an addressable struct, or the result of dereference A pointer
+func TestReflectAddressable(t *testing.T) {
+	var x = 8
+	canSet(x) //false
+	canSet(&x)
+	var y = &x
+	canSet(y)
+	fmt.Println(x)
+
+	s := S{A: 1, b: 2}
+	canSet(&s.A)
+	canSet(s.A) //false
+	fmt.Println(s)
+
+	ret := newCanAddr(reflect.TypeOf(S{}))
+	fmt.Println(ret, ret.(*S).A)
+
+	slice := []int{1, 2, 3}
+	canAddr(slice) //true
+	array := [3]int{1, 2, 3}
+	canAddr(array)  //false
+	canAddr(&array) //addressable array true
+	dict := map[string]int{"test": 3}
+	canAddr(dict) //false
+	canAddr(s)    //false
+	canAddr(&s)   //addressable struct true
+}
+
+func canSet(value interface{}) {
+	fmt.Println("can set ......")
+	rv := reflect.ValueOf(value)
+	fmt.Println(rv.CanAddr(), rv.CanSet(), rv.Type())
+	rv = reflect.Indirect(rv) //comment掉这一行全部case都是false
+	fmt.Println(rv.CanAddr(), rv.CanSet(), rv.Type())
+	if rv.CanSet() {
+		rv.Set(reflect.ValueOf(23))
+		fmt.Println(rv.Interface())
+	}
+}
+
+func canAddr(value interface{}) {
+	fmt.Println("can addr ......")
+	rv := reflect.Indirect(reflect.ValueOf(value))
+
+	var rvIndex reflect.Value
+	switch rv.Type().Kind() {
+	case reflect.Slice, reflect.Array:
+		rvIndex = rv.Index(0)
+	case reflect.Map:
+		rvIndex = rv.MapIndex(reflect.ValueOf("test"))
+	case reflect.Struct:
+		rvIndex = rv.FieldByName("A")
+	}
+	fmt.Println(rvIndex.CanAddr(), rvIndex.CanSet(), rvIndex.Type())
+	if rvIndex.CanAddr() {
+		rvIndex.Set(reflect.ValueOf(33))
+		//rvIndex.Addr().Type() == reflect.PointerTo(rvIndex.Type())
+		fmt.Println(rvIndex.Addr().Type(), reflect.PointerTo(rvIndex.Type()))
+	}
+	fmt.Println(rv.Interface())
+}
+
+func newCanAddr(rt reflect.Type) interface{} {
+	fmt.Println("new can addr ......")
+	if rt.Kind() != reflect.Struct {
+		return nil
+	}
+	ret := reflect.New(rt)
+	fmt.Println(ret.CanAddr(), ret.CanSet(), ret.Type())
+	rv := reflect.Indirect(ret)
+	rv = rv.FieldByName("A")
+	if rv.CanSet() {
+		rv.Set(reflect.ValueOf(23))
+	}
+	return ret.Interface()
+}
+
+// 多重继承
 type Car struct {
 	Name string
 	Age  int
@@ -133,7 +251,7 @@ func (c *Car2) Action() {
 	fmt.Println("car is action", c.Name)
 }
 
-//Go有匿名字段特性
+// Go有匿名字段特性
 type Train struct {
 	Car //强依赖Car struct类型，如果只是依赖Show()和Set(age int)两个方法，可以改为interface 参考Vehicle
 	*Car2
@@ -142,7 +260,7 @@ type Train struct {
 	int
 }
 
-//给Train加方法，t指定接受变量的名字，变量可以叫this，t，p
+// 给Train加方法，t指定接受变量的名字，变量可以叫this，t，p
 func (t *Train) Set(age int) {
 	fmt.Println("train set called")
 	t.int = age
@@ -165,7 +283,7 @@ func TestDerived(t *testing.T) {
 	fmt.Println(train)
 }
 
-//如果接口不想被外部包实现，可以增加一个私有方法，但是可以用匿名嵌套的方式破解
+// 如果接口不想被外部包实现，可以增加一个私有方法，但是可以用匿名嵌套的方式破解
 type Vehicle interface {
 	Engine()
 	//private()
@@ -175,7 +293,7 @@ type EngineImpl struct {
 	Name string
 }
 
-//Vehicle如果有两个方法，EngineImpl只实现一个方法的话不能算实现了接口，必须两个方法都实现
+// Vehicle如果有两个方法，EngineImpl只实现一个方法的话不能算实现了接口，必须两个方法都实现
 func (c *EngineImpl) Engine() {
 	fmt.Println(c.Name, " has engine")
 }
@@ -208,6 +326,31 @@ func TestMethodReceiver(t *testing.T) {
 	bus.Vehicle = DefaultEngine{"special engine"}
 	bus.Engine()
 	bus.Aboard()
+
+	canImplementVehicle(EngineImpl{"test engine"})        //false
+	canImplementVehicle(&EngineImpl{"test engine"})       //normal addr
+	canImplementVehicle(DefaultEngine{"special engine"})  //normal
+	canImplementVehicle(&DefaultEngine{"special engine"}) //normal indirect addr
+}
+
+func canImplementVehicle(value interface{}) {
+	fmt.Println("canImplementVehicle ......")
+	vehicleType := reflect.TypeOf((*Vehicle)(nil)).Elem()
+
+	rv := reflect.ValueOf(value)
+	if rv.Type().Implements(vehicleType) {
+		fmt.Println("normal", rv.Type())
+	}
+
+	rv = reflect.Indirect(rv)
+	if rv.CanAddr() {
+		if rv.Type().Implements(vehicleType) {
+			fmt.Println("indirect", rv.Type())
+		}
+		if rv.Addr().Type().Implements(vehicleType) {
+			fmt.Println("addr", rv.Addr().Type())
+		}
+	}
 }
 
 /*
