@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/asaskevich/govalidator"
 	"github.com/shopspring/decimal"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -145,6 +146,16 @@ type Data2Resp struct {
 	Data Data2 `json:"data"`
 }
 
+// DataResp anonymous struct
+type DataResp struct {
+	CommonBaseResp
+	Data Data `json:"data"`
+	Para struct {
+		Target string  `json:"target"`
+		Bonus  float32 `json:"bonus"`
+	} `json:"para"`
+}
+
 func TestCommonStructJson(t *testing.T) {
 	req := &CommonReq{}
 	req.RequestId = "dsfdf-344-dfgg-3444"
@@ -196,4 +207,46 @@ func unmarshal(req []byte, resp interface{}) {
 		fmt.Println("json deserialize error", err)
 	}
 	fmt.Println("json deserialize", resp)
+}
+
+func TestStructFields(t *testing.T) {
+	var person = DataResp{
+		CommonBaseResp: CommonBaseResp{Version: "1.0", ReturnCode: 200, ReturnMessage: "OK"},
+		Data: Data{Status: 1, Name: "Peter", Gender: true,
+			Amount:  decimal.NewFromFloat(200.02),
+			Birth:   Time(time.Now()),
+			Address: nil,
+			Values:  []int{1, 2, 3},
+		},
+		Para: struct {
+			Target string  `json:"target"`
+			Bonus  float32 `json:"bonus"`
+		}{
+			Target: "target",
+			Bonus:  100,
+		},
+	}
+
+	StructFields(person)
+}
+
+func StructFields(input interface{}) {
+
+	getType := reflect.TypeOf(input)
+	fmt.Println("get Type is :", getType.Name())
+
+	getValue := reflect.ValueOf(input)
+	fmt.Println("get all Fields is:", getValue)
+
+	for i := 0; i < getType.NumField(); i++ {
+		field := getType.Field(i)
+		value := getValue.Field(i).Interface()
+
+		fmt.Printf("exported:%t anonymous:%t name:%s %v = %v\n", field.IsExported(), field.Anonymous, field.Name, field.Type, value)
+
+		tagValue := field.Tag.Get("json")
+		if tagValue != "" {
+			fmt.Printf("json tag value %s\n", tagValue)
+		}
+	}
 }
