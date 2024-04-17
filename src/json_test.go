@@ -228,15 +228,27 @@ func TestStructFields(t *testing.T) {
 	}
 
 	StructFields(person)
+	var test *Data
+	StructFields(test)
+	StructFields(nil) //getValue.IsValid() false
 }
 
 func StructFields(input interface{}) {
+	getValue := reflect.ValueOf(input)
+	fmt.Println("get all Fields is:", getValue)
+
+	if getValue.IsValid() {
+		if getValue.IsZero() {
+			fmt.Println("get all Fields is zero")
+			return
+		}
+	} else {
+		fmt.Println("get all Fields is invalid")
+		return
+	}
 
 	getType := reflect.TypeOf(input)
 	fmt.Println("get Type is :", getType.Name())
-
-	getValue := reflect.ValueOf(input)
-	fmt.Println("get all Fields is:", getValue)
 
 	for i := 0; i < getType.NumField(); i++ {
 		field := getType.Field(i)
