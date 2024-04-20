@@ -30,6 +30,7 @@ func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	return
 }
 
+// MarshalJSON chage (t Time) to (t *Time) json.Marshal(person) cannot trigger this func
 func (t Time) MarshalJSON() ([]byte, error) {
 	b := make([]byte, 0, len(timeFormart)+2)
 	b = append(b, '"')
