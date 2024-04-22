@@ -13,10 +13,6 @@ import (
 var encoderType = reflect.TypeOf((*Encoder)(nil)).Elem()
 var textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 
-type Encoder interface {
-	Encode() ([]byte, error)
-}
-
 func Encode(data interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(data)
 
@@ -39,12 +35,16 @@ func Encode(data interface{}) ([]byte, error) {
 		return nil, errors.New("invalid data kind")
 	}
 
-	return encode(rv, nil)
+	return encode(rv, &encodeOp{})
 }
 
 func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
 
 	rt := rv.Type()
+
+	if encoder, ok := encoderMap[op.encoder]; ok {
+		return encoder(rv.Interface())
+	}
 
 	//time.Time format
 	if t, ok := rv.Interface().(time.Time); ok {
@@ -54,11 +54,12 @@ func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
 	}
 
 	if rv.CanAddr() {
-		if reflect.PointerTo(rt).Implements(encoderType) {
+		rtp := reflect.PointerTo(rt)
+		if rtp.Implements(encoderType) {
 			return rv.Addr().Interface().(Encoder).Encode()
 		}
 
-		if reflect.PointerTo(rt).Implements(textMarshalerType) {
+		if rtp.Implements(textMarshalerType) {
 			return rv.Addr().Interface().(encoding.TextMarshaler).MarshalText()
 		}
 	}
@@ -83,11 +84,11 @@ func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
 	case reflect.String:
 		return stringEncode(rv)
 	case reflect.Struct:
-		return StructEncode(rv)
+		return structEncode(rv)
 	case reflect.Map:
-		return MapEncode(rv)
+		return mapEncode(rv)
 	case reflect.Slice, reflect.Array:
-		return SliceEncode(rv)
+		return sliceEncode(rv)
 	case reflect.Pointer, reflect.Interface:
 		return encode(rv.Elem(), op)
 	default:
@@ -119,15 +120,15 @@ func boolEncode(rv reflect.Value) ([]byte, error) {
 	return []byte("false"), nil
 }
 
-func SliceEncode(rv reflect.Value) ([]byte, error) {
+func sliceEncode(rv reflect.Value) ([]byte, error) {
 	panic("not supported yet")
 }
 
-func MapEncode(rv reflect.Value) ([]byte, error) {
+func mapEncode(rv reflect.Value) ([]byte, error) {
 	panic("not supported yet")
 }
 
-func StructEncode(rv reflect.Value) ([]byte, error) {
+func structEncode(rv reflect.Value) ([]byte, error) {
 	sb := strings.Builder{}
 	for i := 0; i < rv.NumField(); i++ {
 		fieldVal := rv.Field(i)
@@ -186,6 +187,7 @@ func StructEncode(rv reflect.Value) ([]byte, error) {
 
 type encodeOp struct {
 	dateformat string
+	encoder    string
 	name       string
 }
 
@@ -200,6 +202,8 @@ func (op *encodeOp) parse(name string) {
 		if key, value, ok := strings.Cut(tar, "="); ok {
 			if key == "dateformat" {
 				op.dateformat = value
+			} else if key == "encoder" {
+				op.encoder = value
 			}
 		}
 	}
