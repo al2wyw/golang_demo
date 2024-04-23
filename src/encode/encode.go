@@ -193,16 +193,14 @@ type encodeOp struct {
 
 func (op *encodeOp) parse(name string) {
 	ret := strings.Split(name, ",")
-	for i := range ret {
-		tar := strings.TrimSpace(ret[i])
-		if i == 0 {
-			op.name = tar
-			continue
-		}
+	op.name = strings.TrimSpace(ret[0])
+	for _, val := range ret[1:] {
+		tar := strings.TrimSpace(val)
 		if key, value, ok := strings.Cut(tar, "="); ok {
-			if key == "dateformat" {
+			switch key {
+			case "dateformat":
 				op.dateformat = value
-			} else if key == "encoder" {
+			case "encoder":
 				op.encoder = value
 			}
 		}
