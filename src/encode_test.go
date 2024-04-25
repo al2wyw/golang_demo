@@ -83,7 +83,7 @@ func TestStructEncode(t *testing.T) {
 }
 
 func init() {
-	err := encode.RegisterEncoder("customizedEncoder", func(obj interface{}) ([]byte, error) {
+	err := encode.RegisterEncoder("customizedEncoder", func(obj interface{}, op *encode.EncoderOp) ([]byte, error) {
 		if str, ok := obj.(string); ok {
 			return []byte(fmt.Sprintf("/ %s /", str)), nil
 		}

@@ -1,7 +1,7 @@
 package encode
 
 import (
-	"bytes"
+	"container/list"
 	"encoding"
 	"errors"
 	"reflect"
@@ -14,6 +14,18 @@ var encoderType = reflect.TypeOf((*Encoder)(nil)).Elem()
 var textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 
 func Encode(data interface{}) ([]byte, error) {
+	return EncodeWithOp(data, &EncoderOp{
+		Dateformat: "",
+		Encoder:    "",
+		Tag:        "encode",
+		Typeform:   map[reflect.Type]string{reflect.TypeOf(time.Time{}): "\"%s\""},
+		Kindform:   map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Map: "{%s}"},
+		Delimiter:  ",",
+		KVSplitter: ":",
+	})
+}
+
+func EncodeWithOp(data interface{}, op *EncoderOp) ([]byte, error) {
 	rv := reflect.ValueOf(data)
 
 	if !rv.IsValid() {
@@ -35,22 +47,20 @@ func Encode(data interface{}) ([]byte, error) {
 		return nil, errors.New("invalid data kind")
 	}
 
-	return encode(rv, &encodeOp{})
+	return encode(rv, op)
 }
 
-func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
+func encode(rv reflect.Value, op *EncoderOp) ([]byte, error) {
 
 	rt := rv.Type()
 
-	if encoder, ok := encoderMap[op.encoder]; ok {
-		return encoder(rv.Interface())
+	if encoder, ok := encoderMap[op.Encoder]; ok {
+		return encoder(rv.Interface(), op)
 	}
 
 	//time.Time format
-	if t, ok := rv.Interface().(time.Time); ok {
-		if op.dateformat != "" {
-			return []byte(t.Format(op.dateformat)), nil
-		}
+	if _, ok := rv.Interface().(time.Time); ok {
+		return timeEncode(rv, op)
 	}
 
 	if rv.CanAddr() {
@@ -84,7 +94,7 @@ func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
 	case reflect.String:
 		return stringEncode(rv)
 	case reflect.Struct:
-		return structEncode(rv)
+		return structEncode(rv, op)
 	case reflect.Map:
 		return mapEncode(rv)
 	case reflect.Slice, reflect.Array:
@@ -94,6 +104,16 @@ func encode(rv reflect.Value, op *encodeOp) ([]byte, error) {
 	default:
 		return nil, errors.New("invalid data kind")
 	}
+}
+
+func timeEncode(rv reflect.Value, op *EncoderOp) ([]byte, error) {
+	if t, ok := rv.Interface().(time.Time); ok {
+		if op.Dateformat != "" {
+			return []byte(t.Format(op.Dateformat)), nil
+		}
+		return []byte(t.Format(time.RFC3339)), nil
+	}
+	return nil, errors.New("invalid data type")
 }
 
 func stringEncode(rv reflect.Value) ([]byte, error) {
@@ -128,81 +148,71 @@ func mapEncode(rv reflect.Value) ([]byte, error) {
 	panic("not supported yet")
 }
 
-func structEncode(rv reflect.Value) ([]byte, error) {
+func structEncode(v reflect.Value, op *EncoderOp) ([]byte, error) {
 	sb := strings.Builder{}
-	for i := 0; i < rv.NumField(); i++ {
-		fieldVal := rv.Field(i)
-		fieldStruct := rv.Type().Field(i)
+	stack := list.New()
+	stack.PushBack(&v)
 
-		if !fieldVal.IsValid() {
-			return nil, errors.New("invalid data")
-		}
+	for stack.Len() > 0 {
+		rv := stack.Back().Value.(*reflect.Value)
+		stack.Remove(stack.Back())
 
-		if !fieldStruct.IsExported() {
-			continue
-		}
+		for i := 0; i < rv.NumField(); i++ {
+			fieldVal := rv.Field(i)
+			fieldStruct := rv.Type().Field(i)
 
-		if fieldVal.IsZero() {
-			continue
-		}
+			if !fieldVal.IsValid() {
+				return nil, errors.New("invalid data")
+			}
 
-		//不需要处理匿名嵌套结构体，凡是结构体默认展开
+			if !fieldStruct.IsExported() {
+				continue
+			}
 
-		//处理tag
-		name := fieldStruct.Tag.Get("encode")
-		if name == "-" {
-			continue
-		}
+			if fieldVal.IsZero() {
+				continue
+			}
 
-		encodeOp := &encodeOp{}
-		if name == "" {
-			name = fieldStruct.Name
-		} else {
-			encodeOp.parse(name)
-			name = encodeOp.name
-		}
+			//不需要处理匿名嵌套结构体，凡是结构体默认展开
+			if fieldStruct.Anonymous {
+				stack.PushBack(&fieldVal)
+				continue
+			}
 
-		ret, err := encode(fieldVal, encodeOp)
-		if err != nil {
-			return nil, err
-		}
-		if bytes.Contains(ret, []byte("=")) {
-			sb.Write(ret)
-		} else {
-			sb.Write([]byte(name))
-			sb.Write([]byte("="))
-			sb.Write(ret)
-			sb.Write([]byte("&"))
+			//处理tag
+			name := fieldStruct.Tag.Get(op.Tag)
+			if name == "-" {
+				continue
+			}
+
+			encodeOp := &EncoderOp{
+				Tag:        op.Tag,
+				Delimiter:  op.Delimiter,
+				KVSplitter: op.KVSplitter,
+				Dateformat: op.Dateformat,
+				Encoder:    op.Encoder,
+				Typeform:   op.Typeform,
+				Kindform:   op.Kindform,
+			}
+			if name == "" {
+				name = fieldStruct.Name
+			} else {
+				name = encodeOp.parse(name)
+			}
+
+			ret, err := encode(fieldVal, encodeOp)
+			if err != nil {
+				return nil, err
+			}
+			sb.Write([]byte(encodeOp.format(name, string(ret))))
 		}
 	}
 	if sb.Len() > 0 {
 		str := sb.String()
-		if str[len(str)-1] == '&' {
+		if string(str[len(str)-1]) == op.Delimiter {
 			str = str[:len(str)-1]
 		}
 		return []byte(str), nil
 	}
 	return []byte(""), nil
-}
-
-type encodeOp struct {
-	dateformat string
-	encoder    string
-	name       string
-}
-
-func (op *encodeOp) parse(name string) {
-	ret := strings.Split(name, ",")
-	op.name = strings.TrimSpace(ret[0])
-	for _, val := range ret[1:] {
-		tar := strings.TrimSpace(val)
-		if key, value, ok := strings.Cut(tar, "="); ok {
-			switch key {
-			case "dateformat":
-				op.dateformat = value
-			case "encoder":
-				op.encoder = value
-			}
-		}
-	}
 }
