@@ -14,21 +14,54 @@ var encoderType = reflect.TypeOf((*Encoder)(nil)).Elem()
 var textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 
 func Encode(data interface{}) ([]byte, error) {
+	/*
+		return EncodeWithOp(data, &EncoderConf{
+			Options:         EncoderOption{},
+			Dateformat:      "2006-01-02 15:04:05",
+			Tag:             "encode",
+			Formatter: &JsonFormatConf{
+				KeyFormat:       "\"%s\"",
+				Delimiter:       ",",
+				KVSplitter:      ":",
+				ValueTypeFormat: map[reflect.Type]string{reflect.TypeOf(time.Time{}): "\"%s\""},
+				ValueKindFormat: map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Map: "{%s}", reflect.String: "\"%s\""},
+			},
+		})
+	*/
 	return EncodeWithOp(data, &EncoderConf{
-		Options:         EncoderOption{},
-		KeyFormat:       "\"%s\"",
-		Dateformat:      "2006-01-02 15:04:05",
-		Tag:             "encode",
-		Delimiter:       ",",
-		KVSplitter:      ":",
-		ValueTypeFormat: map[reflect.Type]string{reflect.TypeOf(time.Time{}): "\"%s\""},
-		ValueKindFormat: map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Map: "{%s}", reflect.String: "\"%s\""},
+		Options:    EncoderOption{},
+		Dateformat: "2006-01-02 15:04:05",
+		Tag:        "encode",
+		Formatter: &SimpleFormatConf{
+			Delimiter:  "&",
+			KVSplitter: "=",
+		},
 	})
 }
 
 func EncodeWithOp(data interface{}, op *EncoderConf) ([]byte, error) {
 	rv := reflect.ValueOf(data)
 
+	rv = indirect(rv)
+
+	if rv.Kind() != reflect.Struct {
+		return nil, errors.New("invalid data kind")
+	}
+
+	return encode(rv, op)
+}
+
+func indirect(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
+		if v.IsNil() {
+			return v
+		}
+		return indirect(v.Elem())
+	}
+	return v
+}
+
+func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 	if !rv.IsValid() {
 		return nil, errors.New("invalid data")
 	}
@@ -37,31 +70,13 @@ func EncodeWithOp(data interface{}, op *EncoderConf) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
-	//脱引用
-	rpv := reflect.Indirect(rv)
-
-	// for rare case
-	if rpv.Kind() == reflect.Interface {
-		rpv = rpv.Elem()
-	}
-
-	if rpv.Kind() != reflect.Struct {
-		return nil, errors.New("invalid data kind")
-	}
-
-	return encode(rv, op)
-}
-
-func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
-
 	rt := rv.Type()
 
 	if encoder, ok := encoderMap[op.Options[EncoderTag]]; ok {
 		return encoder(rv.Interface(), op)
 	}
 
-	//ptr and inf element otherwise *time.Time
-	//time.Time Format
+	//time.Time and *time.Time should all check here if no indirect
 	if _, ok := rv.Interface().(time.Time); ok {
 		return timeEncode(rv, op)
 	}
@@ -81,6 +96,7 @@ func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 		return rv.Interface().(Encoder).Encode()
 	}
 
+	//pointer of struct and struct both can implement interface
 	if rt.Implements(textMarshalerType) {
 		return rv.Interface().(encoding.TextMarshaler).MarshalText()
 	}
@@ -103,7 +119,7 @@ func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 	case reflect.Slice, reflect.Array:
 		return sliceEncode(rv, op)
 	case reflect.Pointer, reflect.Interface:
-		return encode(rv.Elem(), op)
+		return encode(rv.Elem(), op) //will never trigger with indirect
 	default:
 		return nil, errors.New("invalid data kind")
 	}
@@ -148,11 +164,12 @@ func boolEncode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 func sliceEncode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 	sb := strings.Builder{}
 	for i := 0; i < rv.Len(); i++ {
-		ret, err := encode(rv.Index(i), op)
+		ele := indirect(rv.Index(i))
+		ret, err := encode(ele, op)
 		if err != nil {
 			return nil, err
 		}
-		sb.WriteString(op.FormatSlice(string(ret), sb.Len() == 0, rv.Index(i)))
+		sb.WriteString(op.Formatter.FormatList(string(ret), sb.Len() == 0, ele))
 	}
 	str := sb.String()
 	return []byte(str), nil
@@ -165,11 +182,12 @@ func mapEncode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 			return nil, errors.New("invalid map key")
 		}
 		val := rv.MapIndex(key)
+		val = indirect(val)
 		ret, err := encode(val, op)
 		if err != nil {
 			return nil, err
 		}
-		sb.WriteString(op.Format(key.Interface().(string), string(ret), sb.Len() == 0, val))
+		sb.WriteString(op.Formatter.FormatMap(key.Interface().(string), string(ret), sb.Len() == 0, val))
 	}
 	str := sb.String()
 	return []byte(str), nil
@@ -197,10 +215,6 @@ func structEncode(v reflect.Value, encodeOp *EncoderConf) ([]byte, error) {
 				continue
 			}
 
-			if fieldVal.IsZero() {
-				continue
-			}
-
 			//不需要处理匿名嵌套结构体，凡是结构体默认展开
 			if fieldStruct.Anonymous {
 				stack.PushBack(&fieldVal)
@@ -213,21 +227,20 @@ func structEncode(v reflect.Value, encodeOp *EncoderConf) ([]byte, error) {
 				continue
 			}
 
-			options := encodeOp.Options
-			encodeOp.Options = EncoderOption{}
+			options := encodeOp.reset(EncoderOption{})
 			if name == "" {
 				name = fieldStruct.Name
 			} else {
 				name = encodeOp.parse(name)
 			}
-
+			fieldVal = indirect(fieldVal)
 			ret, err := encode(fieldVal, encodeOp)
 			if err != nil {
 				return nil, err
 			}
-			encodeOp.Options = options
+			_ = encodeOp.reset(options)
 
-			sb.WriteString(encodeOp.Format(name, string(ret), sb.Len() == 0, fieldVal))
+			sb.WriteString(encodeOp.Formatter.FormatMap(name, string(ret), sb.Len() == 0, fieldVal))
 		}
 	}
 	str := sb.String()

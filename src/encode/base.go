@@ -19,6 +19,12 @@ type Encoder interface {
 	Encode() ([]byte, error)
 }
 
+type Formatter interface {
+	FormatMap(key, value string, isEmpty bool, v reflect.Value) string
+
+	FormatList(value string, isEmpty bool, v reflect.Value) string
+}
+
 func RegisterEncoder(key string, fun EncoderFunc) error {
 	if _, ok := encoderMap[key]; ok {
 		return fmt.Errorf("%s exists", key)
@@ -31,15 +37,10 @@ func RegisterEncoder(key string, fun EncoderFunc) error {
 type EncoderOption map[string]string
 
 type EncoderConf struct {
-	Options         EncoderOption
-	KeyFormat       string
-	ValueFormat     string
-	Dateformat      string
-	Tag             string
-	Delimiter       string
-	KVSplitter      string
-	ValueKindFormat map[reflect.Kind]string
-	ValueTypeFormat map[reflect.Type]string
+	Options    EncoderOption
+	Dateformat string
+	Tag        string
+	Formatter  Formatter
 }
 
 func (op *EncoderConf) parse(str string) string {
@@ -54,11 +55,41 @@ func (op *EncoderConf) parse(str string) string {
 	return name
 }
 
-func (f *EncoderConf) Format(key, value string, isEmpty bool, fieldVal reflect.Value) string {
-	if fieldVal.Kind() == reflect.Interface || fieldVal.Kind() == reflect.Pointer {
-		return f.Format(key, value, isEmpty, fieldVal.Elem())
-	}
+func (op *EncoderConf) reset(ops EncoderOption) EncoderOption {
+	old := op.Options
+	op.Options = ops
+	return old
+}
 
+type SimpleFormatConf struct {
+	Delimiter  string
+	KVSplitter string
+}
+
+func (f *SimpleFormatConf) FormatMap(key, value string, isEmpty bool, fieldVal reflect.Value) string {
+	if isEmpty {
+		return fmt.Sprintf("%s%s%s", key, f.KVSplitter, value)
+	}
+	return fmt.Sprintf("%s%s%s%s", f.Delimiter, key, f.KVSplitter, value)
+}
+
+func (f *SimpleFormatConf) FormatList(value string, isEmpty bool, fieldVal reflect.Value) string {
+	if isEmpty {
+		return value
+	}
+	return fmt.Sprintf("%s%s", f.Delimiter, value)
+}
+
+type JsonFormatConf struct {
+	KeyFormat       string
+	ValueFormat     string
+	Delimiter       string
+	KVSplitter      string
+	ValueKindFormat map[reflect.Kind]string
+	ValueTypeFormat map[reflect.Type]string
+}
+
+func (f *JsonFormatConf) FormatMap(key, value string, isEmpty bool, fieldVal reflect.Value) string {
 	if f.KeyFormat != "" {
 		key = fmt.Sprintf(f.KeyFormat, key)
 	}
@@ -77,11 +108,7 @@ func (f *EncoderConf) Format(key, value string, isEmpty bool, fieldVal reflect.V
 	return fmt.Sprintf("%s%s%s%s", f.Delimiter, key, f.KVSplitter, value)
 }
 
-func (f *EncoderConf) FormatSlice(value string, isEmpty bool, fieldVal reflect.Value) string {
-	if fieldVal.Kind() == reflect.Interface || fieldVal.Kind() == reflect.Ptr {
-		return f.FormatSlice(value, isEmpty, fieldVal.Elem())
-	}
-
+func (f *JsonFormatConf) FormatList(value string, isEmpty bool, fieldVal reflect.Value) string {
 	if format, ok := f.ValueTypeFormat[fieldVal.Type()]; ok {
 		value = fmt.Sprintf(format, value)
 	} else if format, ok := f.ValueKindFormat[fieldVal.Kind()]; ok {

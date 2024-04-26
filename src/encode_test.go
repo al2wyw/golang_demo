@@ -77,19 +77,19 @@ func TestStructEncode(t *testing.T) {
 	}
 	b, _ := encode.Encode(data)
 	fmt.Println(string(b))
-	c, _ := encode.Encode(&data) // MarshalText trigger
+	c, _ := encode.Encode(&data) // MarshalText trigger, indirect: ptr -> struct
 	fmt.Println(string(c))
 
 	var reachable Reachable = data
 	r, _ := encode.Encode(reachable) //equivalent to b
 	fmt.Println(string(r))
-	r1, _ := encode.Encode(&reachable) //rare case
+	r1, _ := encode.Encode(&reachable) //rare case, indirect: ptr -> intf -> struct
 	fmt.Println(string(r1))
 
 	var reachableP Reachable = &data
-	rp, _ := encode.Encode(reachableP) // MarshalText trigger equivalent to c
+	rp, _ := encode.Encode(reachableP) // MarshalText trigger equivalent to c, indirect: ptr -> struct
 	fmt.Println(string(rp))
-	rp1, _ := encode.Encode(&reachableP) //rare case
+	rp1, _ := encode.Encode(&reachableP) //rare case, MarshalText trigger, indirect: ptr -> intf -> ptr -> struct
 	fmt.Println(string(rp1))
 
 	var dataP *EData = &data
