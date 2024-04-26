@@ -29,16 +29,23 @@ type Sub struct {
 	Target string `encode:"target"`
 }
 
+type SubData struct {
+	ID string `encode:"id"`
+}
+
 type EData struct {
 	Name   string       `encode:"name"`
 	Age    AgeT         `encode:"age"`
-	Date   time.Time    `encode:"date,dateformat=2006-01-02 15:04:05"`
+	Date   time.Time    `encode:"date,dateformat=2006-01-02"`
 	Salary float64      `encode:"salary"`
 	Valid  bool         `encode:"valid"`
 	IdCard SensitiveStr `encode:"idCard"`
 	Encode string       `encode:"encode,encoder=customizedEncoder"`
 	Sub
-	no string `encode:"no"`
+	no      string                 `encode:"no"`
+	SubData SubData                `encode:"data"`
+	Array   []SubData              `encode:"array"`
+	Map     map[string]interface{} `encode:"map"`
 }
 
 func (d EData) Reach() {
@@ -58,6 +65,16 @@ func TestStructEncode(t *testing.T) {
 	data.Encode = "test for encode"
 	data.IdCard = "34443test445555"
 	data.Sub.Target = "sub"
+	data.SubData.ID = "test for id"
+	data.Array = []SubData{
+		{ID: "test for id1"},
+		{ID: "test for id2"},
+	}
+	now := time.Now()
+	data.Map = map[string]interface{}{
+		"test1": &now,
+		"test2": SubData{ID: "test for id2"},
+	}
 	b, _ := encode.Encode(data)
 	fmt.Println(string(b))
 	c, _ := encode.Encode(&data) // MarshalText trigger
@@ -83,7 +100,7 @@ func TestStructEncode(t *testing.T) {
 }
 
 func init() {
-	err := encode.RegisterEncoder("customizedEncoder", func(obj interface{}, op *encode.EncoderOp) ([]byte, error) {
+	err := encode.RegisterEncoder("customizedEncoder", func(obj interface{}, op *encode.EncoderConf) ([]byte, error) {
 		if str, ok := obj.(string); ok {
 			return []byte(fmt.Sprintf("/ %s /", str)), nil
 		}
