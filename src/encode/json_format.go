@@ -15,7 +15,7 @@ var JsonFormat = EncoderConf{
 		Delimiter:       ",",
 		KVSplitter:      ":",
 		ValueTypeFormat: map[reflect.Type]string{reflect.TypeOf(time.Time{}): "\"%s\""},
-		ValueKindFormat: map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Map: "{%s}", reflect.String: "\"%s\""},
+		ValueKindFormat: map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Array: "[%s]", reflect.Map: "{%s}", reflect.String: "\"%s\""},
 	},
 }
 

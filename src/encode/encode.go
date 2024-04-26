@@ -11,7 +11,7 @@ import (
 )
 
 var encoderType = reflect.TypeOf((*Encoder)(nil)).Elem()
-var textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
+var textMarshallerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 
 func Encode(data interface{}) ([]byte, error) {
 	return EncodeWithOp(data, &JsonFormat)
@@ -65,7 +65,7 @@ func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 			return rv.Addr().Interface().(Encoder).Encode()
 		}
 
-		if rtp.Implements(textMarshalerType) {
+		if rtp.Implements(textMarshallerType) {
 			return rv.Addr().Interface().(encoding.TextMarshaler).MarshalText()
 		}
 	}
@@ -75,7 +75,7 @@ func encode(rv reflect.Value, op *EncoderConf) ([]byte, error) {
 	}
 
 	//pointer of struct and struct both can implement interface
-	if rt.Implements(textMarshalerType) {
+	if rt.Implements(textMarshallerType) {
 		return rv.Interface().(encoding.TextMarshaler).MarshalText()
 	}
 

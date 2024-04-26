@@ -44,7 +44,8 @@ type EData struct {
 	Sub
 	no      string                 `encode:"no"`
 	SubData SubData                `encode:"data"`
-	Array   []SubData              `encode:"array"`
+	Array   [2]SubData             `encode:"array"`
+	Slice   []SubData              `encode:"slice"`
 	Map     map[string]interface{} `encode:"map"`
 }
 
@@ -66,9 +67,13 @@ func TestStructEncode(t *testing.T) {
 	data.IdCard = "34443test445555"
 	data.Sub.Target = "sub"
 	data.SubData.ID = "test for id"
-	data.Array = []SubData{
+	data.Array = [2]SubData{
 		{ID: "test for id1"},
 		{ID: "test for id2"},
+	}
+	data.Slice = []SubData{
+		{ID: "test for id11"},
+		{ID: "test for id21"},
 	}
 	now := time.Now()
 	data.Map = map[string]interface{}{
