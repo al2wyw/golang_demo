@@ -14,29 +14,7 @@ var encoderType = reflect.TypeOf((*Encoder)(nil)).Elem()
 var textMarshalerType = reflect.TypeOf((*encoding.TextMarshaler)(nil)).Elem()
 
 func Encode(data interface{}) ([]byte, error) {
-	/*
-		return EncodeWithOp(data, &EncoderConf{
-			Options:         EncoderOption{},
-			Dateformat:      "2006-01-02 15:04:05",
-			Tag:             "encode",
-			Formatter: &JsonFormatConf{
-				KeyFormat:       "\"%s\"",
-				Delimiter:       ",",
-				KVSplitter:      ":",
-				ValueTypeFormat: map[reflect.Type]string{reflect.TypeOf(time.Time{}): "\"%s\""},
-				ValueKindFormat: map[reflect.Kind]string{reflect.Struct: "{%s}", reflect.Slice: "[%s]", reflect.Map: "{%s}", reflect.String: "\"%s\""},
-			},
-		})
-	*/
-	return EncodeWithOp(data, &EncoderConf{
-		Options:    EncoderOption{},
-		Dateformat: "2006-01-02 15:04:05",
-		Tag:        "encode",
-		Formatter: &SimpleFormatConf{
-			Delimiter:  "&",
-			KVSplitter: "=",
-		},
-	})
+	return EncodeWithOp(data, &JsonFormat)
 }
 
 func EncodeWithOp(data interface{}, op *EncoderConf) ([]byte, error) {
@@ -53,7 +31,7 @@ func EncodeWithOp(data interface{}, op *EncoderConf) ([]byte, error) {
 
 func indirect(v reflect.Value) reflect.Value {
 	if v.Kind() == reflect.Pointer || v.Kind() == reflect.Interface {
-		if v.IsNil() {
+		if v.IsNil() { // nil pointer, dereference it will cause invalid value, kind is invalid
 			return v
 		}
 		return indirect(v.Elem())
@@ -215,7 +193,7 @@ func structEncode(v reflect.Value, encodeOp *EncoderConf) ([]byte, error) {
 				continue
 			}
 
-			//不需要处理匿名嵌套结构体，凡是结构体默认展开
+			//需要处理匿名嵌套结构体，凡是匿名嵌套结构体默认展开, 深度优先遍历
 			if fieldStruct.Anonymous {
 				stack.PushBack(&fieldVal)
 				continue
