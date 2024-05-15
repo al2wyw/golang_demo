@@ -18,6 +18,22 @@ func (t *genericBase) print() {
 	fmt.Println("genericBase print", t.name, t.value)
 }
 
+type genericExtend struct {
+	genericBase
+	salary float64
+}
+
+func (t *genericExtend) print() {
+	fmt.Println("genericExtend print", t.name, t.value, t.salary)
+}
+
+// 不能使用 struct 作为泛型约束, 只能使用 interface 作为泛型约束
+func testPrint[T genericBase](t T) {
+	//fmt.Println("testPrint", t.name, t.value)
+	//t.print()
+	fmt.Println("testPrint", t)
+}
+
 func testGeneric[T canPrint](t T) {
 	t.print()
 }
@@ -84,4 +100,6 @@ func TestGeneric(tt *testing.T) {
 	if _, err := container.Remove(); err != nil {
 		fmt.Println(err)
 	}
+
+	testPrint(*base)
 }
