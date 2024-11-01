@@ -45,13 +45,14 @@ func (t Time) String() string {
 
 // Data 也可以利用Data来实现 UnmarshalJSON 方法来实现特殊的反序列化逻辑
 type Data struct {
-	Status  int             `json:"status"  valid:"required,range(1|10)~invalid pageSize"`
-	Name    string          `json:"name"`
-	Gender  bool            `json:"gender"`
-	Amount  decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
-	Birth   Time            `json:"birth"`
-	Address *Address        `json:"address,omitempty"`
-	Values  []int           `json:"values"`
+	Status    int             `json:"status"  valid:"required,range(1|10)~invalid pageSize"`
+	Name      string          `json:"name"`
+	Gender    bool            `json:"gender"`
+	Amount    decimal.Decimal `json:"amount"` //Decimal已经自己实现了 UnmarshalJSON 方法
+	Birth     Time            `json:"birth"`
+	Address   *Address        `json:"address,omitempty"`
+	Values    []int           `json:"values"`
+	ModelType *int            `json:"modelType,omitempty" valid:"required,range(0|4)~invalid modelType"`
 }
 
 type Address struct {
@@ -64,7 +65,7 @@ func TestJson(t *testing.T) {
 }
 
 func testJson() {
-	var data = []byte(`{"status": 0, "birth": "2019-01-01", "gender": true, "amount": 200.02}`)
+	var data = []byte(`{"status": 0, "birth": "2019-01-01", "gender": true, "amount": 200.02, "modelType": 10}`)
 	res := make(map[string]interface{})
 	if err := json.Unmarshal(data, &res); err != nil {
 		fmt.Println("json deserialize error", err)
@@ -80,7 +81,7 @@ func testJson() {
 	}
 	ok, err := govalidator.ValidateStruct(person)
 	if !ok || err != nil {
-		fmt.Println("error person", person)
+		fmt.Println("error person", person, err)
 	}
 
 	str, _ := json.Marshal(person)
