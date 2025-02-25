@@ -19,7 +19,7 @@ func TestDefer(t *testing.T) {
 	testTypeAssert("test")
 }
 
-//TestDeferExit 优雅退出
+// TestDeferExit 优雅退出
 func TestDeferExit(t *testing.T) {
 	defer func() {
 		fmt.Println("exit")
@@ -81,7 +81,7 @@ func TestFatalErrorCannotRecover(t *testing.T) {
 	fmt.Println("done") //never executed
 }
 
-//fatalMap fatal error: concurrent map read and map write
+// fatalMap fatal error: concurrent map read and map write
 func fatalMap() {
 	loop := 100000
 	m := map[string]int{}
@@ -95,6 +95,7 @@ func fatalMap() {
 	}
 }
 
+// 参考goroutine + 闭包的笔记
 func testDefer() {
 	var i = 1
 
@@ -106,10 +107,10 @@ func testDefer() {
 func testDeferV2() int {
 	var i = 1
 
-	defer func() int { i *= 2; fmt.Println("result: ", i); return i }() //2
+	defer func() int { i *= 2; fmt.Println("result: ", i); return i }() //4
 	i++
 	fmt.Println("main result: ", i) //2
-	return i
+	return i                        //2
 }
 
 func testTypeAssert(object interface{}) {
