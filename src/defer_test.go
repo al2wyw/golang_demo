@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -12,8 +13,10 @@ import (
 )
 
 func TestDefer(t *testing.T) {
-	testDefer()
-	fmt.Println("defer return", testDeferV2())
+	testDefer(t)
+	ret := testDeferV2(t)
+	assert.Equal(t, 2, ret)
+	fmt.Println("defer return", ret)
 
 	testTypeAssert(1)
 	testTypeAssert("test")
@@ -96,21 +99,32 @@ func fatalMap() {
 }
 
 // 参考goroutine + 闭包的笔记
-func testDefer() {
+func testDefer(t *testing.T) {
 	var i = 1
 
-	defer fmt.Println("result: ", func() int { fmt.Println("call: ", i); return i * 2 }()) //2
+	defer fmt.Println("result: ", func() int {
+		fmt.Println("call: ", i)
+		assert.Equal(t, 2, i*2)
+		return i * 2
+	}()) //2
 	i++
 	fmt.Println("main result: ", i) //2
+	assert.Equal(t, 2, i)
 }
 
-func testDeferV2() int {
+func testDeferV2(t *testing.T) int {
 	var i = 1
 
-	defer func() int { i *= 2; fmt.Println("result: ", i); return i }() //4
+	defer func() int {
+		i *= 2
+		fmt.Println("result: ", i)
+		assert.Equal(t, 4, i)
+		return i
+	}() //4
 	i++
 	fmt.Println("main result: ", i) //2
-	return i                        //2
+	assert.Equal(t, 2, i)
+	return i //2
 }
 
 func testTypeAssert(object interface{}) {
