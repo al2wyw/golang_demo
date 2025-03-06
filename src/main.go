@@ -31,6 +31,7 @@ func (p *ByteSlice) Append(data []byte) {
 }
 
 func main() {
+
 	test := make(ByteSlice, 10)
 	test.Append(make([]byte, 10))
 
