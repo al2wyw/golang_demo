@@ -82,35 +82,66 @@ func AfterAspect1(args []interface{}) error {
 	return nil
 }
 
-func TargetFunction(id int, name string, user *User) (*User, error) {
+type TargetInf interface {
+	TargetFunction(id int, name string, user *User) (*User, error)
+}
+
+type Target struct {
+}
+
+func (t *Target) TargetFunction(id int, name string, user *User) (*User, error) {
 	user.ID = 13
 	user.Name = "John Doe"
 	log.Printf("Executing target function with ID: %d, Name: %s, User: %+v\n", id, name, user)
 	return user, nil
 }
 
-func TestAop(f *testing.T) {
-	myAspect := &Aspect{
-		Before: []func([]interface{}) error{
-			BeforeAspect1,
-			BeforeAspect2,
-			BeforeAspect3,
-		},
-		After: []func([]interface{}) error{
-			AfterAspect1,
-		},
-	}
+type TargetAop struct {
+	Aop *Aspect
+	TargetInf
+}
 
+func (t *TargetAop) TargetFunction(id int, name string, user *User) (*User, error) {
+	if t.Aop == nil {
+		return t.TargetInf.TargetFunction(id, name, user)
+	}
+	result, err := t.Aop.Apply(t.TargetInf.TargetFunction, id, name, user)
+	if err != nil {
+		return nil, err
+	}
+	return result[0].(*User), nil
+}
+
+func NewTargetInf() TargetInf {
+	service := &Target{}
+	serviceAop := &TargetAop{
+		Aop: &Aspect{
+			Before: []func([]interface{}) error{
+				BeforeAspect1,
+				BeforeAspect2,
+				BeforeAspect3,
+			},
+			After: []func([]interface{}) error{
+				AfterAspect1,
+			},
+		},
+		TargetInf: service,
+	}
+	return serviceAop
+}
+
+func TestAop(f *testing.T) {
 	// 构造目标函数的参数值
 	id := 1
 	name := "John"
 	user := &User{ID: 100, Name: "Alice"}
 
-	result, err := myAspect.Apply(TargetFunction, id, name, user)
+	var target = NewTargetInf()
+	result, err := target.TargetFunction(id, name, user)
 	if err != nil {
 		log.Println("have err:", err)
 		return
 	}
 
-	log.Println("Target function result:", len(result), result[0])
+	log.Println("Target function result:", result)
 }
