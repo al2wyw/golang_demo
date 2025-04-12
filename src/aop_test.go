@@ -13,19 +13,24 @@ type User struct {
 }
 
 type Aspect struct {
-	Before []func([]reflect.Value) error
-	After  []func([]reflect.Value) error
+	Before []func([]interface{}) error
+	After  []func([]interface{}) error
 }
 
 // Apply 利用反射执行切面的前置和后置处理函数
-func (a *Aspect) Apply(targetFunc interface{}, args []reflect.Value) ([]reflect.Value, error) {
+func (a *Aspect) Apply(targetFunc interface{}, args ...interface{}) ([]interface{}, error) {
 	for _, beforeFunc := range a.Before {
 		if err := beforeFunc(args); err != nil {
 			return nil, err
 		}
 	}
 
-	result := reflect.ValueOf(targetFunc).Call(args)
+	vArgs := make([]reflect.Value, len(args))
+	for i, arg := range args {
+		vArgs[i] = reflect.ValueOf(arg)
+	}
+	result := reflect.ValueOf(targetFunc).Call(vArgs)
+	var rets []interface{}
 	for _, v := range result {
 		if v.Type().AssignableTo(reflect.TypeOf((*error)(nil)).Elem()) {
 			if v.IsNil() {
@@ -38,6 +43,8 @@ func (a *Aspect) Apply(targetFunc interface{}, args []reflect.Value) ([]reflect.
 			} else {
 				log.Panicln("Failed to convert return value to error")
 			}
+		} else {
+			rets = append(rets, v.Interface())
 		}
 	}
 
@@ -47,30 +54,30 @@ func (a *Aspect) Apply(targetFunc interface{}, args []reflect.Value) ([]reflect.
 		}
 	}
 
-	return result, nil
+	return rets, nil
 }
 
-func BeforeAspect1(args []reflect.Value) error {
-	id := args[0].Interface().(int)
+func BeforeAspect1(args []interface{}) error {
+	id := args[0].(int)
 	log.Println("BeforeAspect1 get id:", id)
 	// change the first argument value
-	args[0] = reflect.ValueOf(id + 1)
+	args[0] = id + 1
 	return nil
 }
 
-func BeforeAspect2(args []reflect.Value) error {
-	name := args[1].Interface().(string)
+func BeforeAspect2(args []interface{}) error {
+	name := args[1].(string)
 	log.Println("BeforeAspect2 get name:", name)
 	return nil
 }
 
-func BeforeAspect3(args []reflect.Value) error {
-	user := args[2].Interface().(*User)
+func BeforeAspect3(args []interface{}) error {
+	user := args[2].(*User)
 	log.Println("BeforeAspect3 get user:", user.ID, user.Name)
 	return nil
 }
 
-func AfterAspect1(args []reflect.Value) error {
+func AfterAspect1(args []interface{}) error {
 	log.Println("AfterAspect1")
 	return nil
 }
@@ -84,12 +91,12 @@ func TargetFunction(id int, name string, user *User) (*User, error) {
 
 func TestAop(f *testing.T) {
 	myAspect := &Aspect{
-		Before: []func([]reflect.Value) error{
+		Before: []func([]interface{}) error{
 			BeforeAspect1,
 			BeforeAspect2,
 			BeforeAspect3,
 		},
-		After: []func([]reflect.Value) error{
+		After: []func([]interface{}) error{
 			AfterAspect1,
 		},
 	}
@@ -98,17 +105,12 @@ func TestAop(f *testing.T) {
 	id := 1
 	name := "John"
 	user := &User{ID: 100, Name: "Alice"}
-	args := []reflect.Value{
-		reflect.ValueOf(id),
-		reflect.ValueOf(name),
-		reflect.ValueOf(user),
-	}
 
-	result, err := myAspect.Apply(TargetFunction, args)
+	result, err := myAspect.Apply(TargetFunction, id, name, user)
 	if err != nil {
 		log.Println("have err:", err)
 		return
 	}
 
-	log.Println("Target function result:", result)
+	log.Println("Target function result:", len(result), result[0])
 }
