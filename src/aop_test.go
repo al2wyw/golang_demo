@@ -53,6 +53,8 @@ func (a *Aspect) Apply(targetFunc interface{}, args []reflect.Value) ([]reflect.
 func BeforeAspect1(args []reflect.Value) error {
 	id := args[0].Interface().(int)
 	log.Println("BeforeAspect1 get id:", id)
+	// change the first argument value
+	args[0] = reflect.ValueOf(id + 1)
 	return nil
 }
 
