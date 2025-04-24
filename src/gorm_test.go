@@ -46,11 +46,63 @@ func TestGormCreate(tt *testing.T) {
 		GmtModified: time.Now(),
 	}
 
+	// 会插入0值，deleted is 0
 	if err := db.Omit().Create(data).Error; err != nil {
 		fmt.Printf("create data error:%v\n", err)
 	}
 
 	fmt.Println(data.ID)
+
+	// 忽略deleted，deleted is null
+	data.ID = 0
+	if err := db.Omit("Deleted").Create(data).Error; err != nil {
+		fmt.Printf("create data error:%v\n", err)
+	}
+
+	fmt.Println(data.ID)
+}
+
+func TestGormUpdate(tt *testing.T) {
+	db := getDB()
+
+	data := &model.DataTypeTest{
+		Amount:      34.34,
+		Content:     "test",
+		Version:     "1",
+		GmtCreate:   time.Now(),
+		GmtModified: time.Now(),
+	}
+
+	// 会插入0值，deleted is 0
+	if err := db.Save(data).Error; err != nil {
+		fmt.Printf("create data error:%v\n", err)
+	}
+
+	fmt.Println(data.ID)
+
+	// 因为id不为0，所以变成update，会更新0值，deleted is 0
+	if err := db.Save(data).Error; err != nil {
+		fmt.Printf("update data error:%v\n", err)
+	}
+
+	// update, 忽略struct的0值，使用map[string]interface{}可以更新0值
+	if err := db.Model(&model.DataTypeTest{ID: data.ID}).Updates(data).Error; err != nil {
+		fmt.Printf("update data error:%v\n", err)
+	}
+
+	// update, select可以更新0值, not work ???
+	data.Content = ""
+	if err := db.Model(&model.DataTypeTest{ID: data.ID}).Select("Content", "Amount").Updates(data).Error; err != nil {
+		fmt.Printf("update data error:%v\n", err)
+	}
+
+	// batch updates
+	data.Version = "2"
+	if err := db.Model(&model.DataTypeTest{}).Select("Version").Updates(data).Error; err != nil {
+		fmt.Printf("update data error:%v\n", err)
+	}
+
+	// UpdateColumns works like Updates while it skips hooks
 }
 
 // TestGorm 数据库空值测试
